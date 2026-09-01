@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f7f3">
+<title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
+<meta name="description" content="Take over a piece of the page. Keep it until somebody pays more.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="takeover.css?v=1">
+</head>
+<body>
+<main class="board" id="board">
+  <div class="grid-lines" id="gridLines"></div>
+  <div class="territories" id="territories"></div>
+  <div class="spot-actions" id="spotActions"></div>
+  <div class="chrome">
+    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span></div>
+    <div class="controls">
+      <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
+      <span class="chrome-btn primary" id="shieldFlag" hidden>FULL TAKEOVER PROTECTED</span>
+      <button class="chrome-btn primary" id="takePageBtn">TAKE THE PAGE</button>
+      <button class="chrome-btn" id="rulesBtn">RULES</button>
+      <button class="chrome-btn alert" id="alertBtn" hidden>ALERTS <span class="badge" id="alertBadge" hidden>0</span></button>
+      <button class="chrome-btn" id="adminBtn" hidden>ADMIN</button>
+      <button class="chrome-btn" id="accountBtn">SIGN IN</button>
+      <button id="legalBtn" hidden>LEGAL</button>
+    </div>
+  </div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="panel modal" id="introModal">
+  <div class="panel-inner">
+    <div class="intro-kicker">WELCOME TO TAKEOVER</div>
+    <h1 class="intro-title">This webpage belongs to<br><em>whoever wants it most.</em></h1>
+    <p class="intro-copy">Pick a spot. Pay more than its current owner. It becomes yours until somebody pays more than you. Own touching spots and your ad grows. Own all twelve and you own the page.</p>
+    <div class="rules-list">
+      <div class="rule"><b>1 · Pay more and it becomes yours.</b><span>Available spots start at the listed price. Occupied spots can be taken for $1 more.</span></div>
+      <div class="rule"><b>2 · You keep it until somebody takes it.</b><span>No daily reset. No countdown. Ownership is indefinite.</span></div>
+      <div class="rule"><b>3 · Grow into neighboring spots.</b><span>Connected spots visually merge into larger advertising territory.</span></div>
+      <div class="rule"><b>4 · Take all twelve to own the page.</b><span>A full-page takeover is exclusive for 24 hours. After the shield expires, it lasts until somebody breaks it by taking one spot back.</span></div>
+    </div>
+    <button class="action" id="introGotIt">I GET IT</button>
+  </div>
+</section>
+
+<section class="panel modal" id="takeoverModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span id="takeoverKicker">TAKEOVER</span><h2 id="takeoverTitle">Take a spot.</h2></div><button class="close" data-close>×</button></div>
+    <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 12</button></div>
+    <div class="mini-grid" id="miniGrid"></div>
+    <div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div>
+    <div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div>
+    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">PNG, JPG or WebP. If you skip the logo, your company name becomes the ad.</p></div>
+    <div class="bid-list" id="bidRows"></div>
+    <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
+    <div id="signinGate"><p class="hint">No passwords. Sign in with a one-click email link, then Stripe handles the payment.</p><button class="action" id="continueSignin">SIGN IN TO CONTINUE</button></div>
+    <div id="signedAs" class="hint" hidden></div>
+    <button class="action" id="checkoutBtn" hidden>PAY & TAKE OVER</button>
+    <p class="hint">A full 12-spot purchase gets 24 hours of exclusive protection. If the board changes or protection activates while you are in Checkout, the purchase is rejected and automatically refunded instead of assigning stale territory.</p>
+  </div>
+</section>
+
+<section class="panel modal" id="authModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>PASSWORDLESS ACCESS</span><h2>Enter your email.</h2></div><button class="close" data-close>×</button></div>
+    <p class="hint">We send one secure sign-in link. No username. No password. The same email manages every spot you own.</p>
+    <div class="field"><label>EMAIL</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
+    <button class="action" id="sendMagicLink">EMAIL ME A SIGN-IN LINK</button>
+    <div class="success-state" id="authSent" hidden></div>
+  </div>
+</section>
+
+<aside class="panel drawer" id="accountPanel">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>YOUR TERRITORY</span><h2>My spots.</h2></div><button class="close" data-close>×</button></div>
+    <div class="hint" id="accountEmail"></div>
+    <div class="field"><label>COMPANY</label><input id="accountCompany" maxlength="80"></div>
+    <div class="field"><label>WEBSITE</label><input id="accountWebsite" maxlength="300"></div>
+    <div class="field"><label>LOGO</label><div class="logo-drop" id="accountLogoPreview"><span>NO LOGO YET</span><input id="accountLogo" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
+    <button class="secondary" id="saveBrand">UPDATE MY ADS</button>
+    <div class="selector-title"><div><b>OWNED SPOTS</b><small>Raise a spot whenever you want to make it harder to take.</small></div></div>
+    <div id="mySpots"></div>
+    <div class="selector-title"><div><b>ALERTS</b><small>Outbids and payment updates.</small></div></div>
+    <div id="alerts"></div>
+    <button class="secondary danger" id="signOut">SIGN OUT</button>
+  </div>
+</aside>
+
+<section class="panel modal" id="rulesModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>THE WHOLE GAME</span><h2>Four rules.</h2></div><button class="close" data-close>×</button></div>
+    <div class="rules-list">
+      <div class="rule"><b>Pay more. Take the spot.</b><span>Minimum increase is $1 unless the board owner changes it globally.</span></div>
+      <div class="rule"><b>Keep it until you are outbid.</b><span>There is no timer and no automatic reset.</span></div>
+      <div class="rule"><b>Defend by raising your own price.</b><span>You only pay the difference between your current level and your new level.</span></div>
+      <div class="rule"><b>Own all twelve. Own the page.</b><span>Buying all twelve gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
+    </div>
+    <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
+    <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">CONTACT</a></div>
+  </div>
+</section>
+
+<aside class="panel drawer" id="adminPanel">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>OWNER ONLY</span><h2>TAKEOVER control.</h2></div><button class="close" data-close>×</button></div>
+    <label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
+    <div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div></div>
+    <button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>
+    <div class="selector-title"><div><b>LIVE BOARD</b><small>Clear an ad for moderation. This does not automatically issue a refund.</small></div></div>
+    <div id="adminBoard"></div>
+    <div class="selector-title"><div><b>RECENT PURCHASES</b><small>Latest Stripe takeover attempts.</small></div></div>
+    <div id="adminAttempts"></div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="takeover-v2.js?v=2"></script>
+</body>
+</html>
