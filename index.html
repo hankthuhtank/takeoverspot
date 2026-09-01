@@ -9,15 +9,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="takeover.css?v=3">
+<link rel="stylesheet" href="takeover.css?v=4">
 </head>
 <body>
 <main class="board" id="board">
   <div class="grid-lines" id="gridLines"></div>
   <div class="territories" id="territories"></div>
   <div class="spot-actions" id="spotActions"></div>
+  <div class="takeover-reveal-stage" id="takeoverRevealStage" hidden></div>
   <div class="chrome">
-    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span></div>
+    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><em>X + INSTAGRAM</em></div></div>
     <div class="controls">
       <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
       <span class="chrome-btn primary" id="shieldFlag" hidden>FULL TAKEOVER PROTECTED</span>
@@ -57,8 +58,7 @@
     <div class="panel-head"><div><span id="takeoverKicker">TAKEOVER</span><h2 id="takeoverTitle">Take a spot.</h2></div><button class="close" data-close>×</button></div>
     <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 12</button></div>
     <div class="mini-grid" id="miniGrid"></div>
-    <div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div>
-    <div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div>
+    <div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>
     <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">PNG, JPG or WebP. If you skip the logo, your company name becomes the ad.</p></div>
 
     <div class="creative-upgrade" id="purchaseCreativeUpgrade" hidden>
@@ -132,6 +132,7 @@
     </div>
     <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
     <p class="rules-copy"><strong>Advertiser content is third-party content.</strong> Advertisers are responsible for their claims, offers, products, services, images, trademarks, and destination websites. TAKEOVER may remove reported or risky content but does not endorse it.</p>
+    <p class="rules-copy"><strong>Moderation is intentionally rare.</strong> Weird, ugly, provocative, annoying, competitive, or unpopular ads are not the problem. Owner resets are reserved for fraud/scams, malware/phishing, illegal or clearly dangerous activity, impersonation or serious rights abuse, credible safety/legal risk, or a comparably extreme issue.</p>
     <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
 </section>
@@ -142,15 +143,29 @@
     <label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
     <div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div></div>
     <button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>
-    <div class="selector-title"><div><b>LIVE BOARD</b><small>Clear an ad for moderation. This does not automatically issue a refund.</small></div></div>
+    <div class="selector-title"><div><b>LIVE BOARD</b><small>Emergency reset only. Taste, bad design, or ordinary controversy are not reset reasons.</small></div></div>
     <div id="adminBoard"></div>
     <div class="selector-title"><div><b>RECENT PURCHASES</b><small>Latest Stripe takeover attempts.</small></div></div>
     <div id="adminAttempts"></div>
+    <div class="selector-title"><div><b>MODERATION HISTORY</b><small>Private owner log of manual resets.</small></div></div>
+    <div id="adminModeration"></div>
   </div>
 </aside>
 
+<section class="panel modal moderation-modal" id="moderationModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>OWNER MODERATION</span><h2 id="moderationTitle">Reset a spot.</h2></div><button class="close" data-close>×</button></div>
+    <div class="moderation-policy"><b>USE THIS RARELY.</b><p>TAKEOVER is intentionally permissive. Do not reset a spot because it is ugly, weird, provocative, annoying, competitive, or unpopular. Reset only for an extreme fraud, security, legal, rights, or safety problem.</p></div>
+    <div class="field"><label>WHY ARE YOU RESETTING IT?</label><select id="moderationReason"><option value="">Choose an extreme reason</option><option value="fraud_or_scam">Fraud or scam</option><option value="malware_or_phishing">Malware / phishing / malicious redirect</option><option value="illegal_or_dangerous">Illegal or clearly dangerous activity</option><option value="impersonation_or_rights">Impersonation / serious rights abuse</option><option value="credible_safety_or_legal_risk">Credible safety or legal risk</option><option value="other_extreme_issue">Other comparably extreme issue</option></select></div>
+    <div class="field"><label>PRIVATE NOTE · OPTIONAL</label><textarea id="moderationNote" maxlength="500" placeholder="Short internal note. Required only if you choose Other."></textarea></div>
+    <p class="hint">Resetting returns the spot to available and resets its takeover price. It does not automatically refund the advertiser. The action is privately logged.</p>
+    <button class="action danger" id="confirmResetSpot">RESET SPOT TO AVAILABLE</button>
+    <button class="secondary" id="moderationCancel">KEEP THE SPOT</button>
+  </div>
+</section>
+
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="takeover-v2.js?v=4"></script>
+<script src="takeover-v2.js?v=5"></script>
 </body>
 </html>
