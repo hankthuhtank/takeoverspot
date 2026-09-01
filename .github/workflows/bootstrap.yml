@@ -3,7 +3,6 @@ on:
   push:
     branches: [main]
     paths: ['.github/workflows/bootstrap.yml']
-  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -37,43 +36,10 @@ jobs:
 
           Production frontend for [takeoverspot.com](https://takeoverspot.com).
 
-          Backend: dedicated TAKEOVER/Spot Supabase project. Payments: Stripe Checkout.
+          Backend: dedicated TAKEOVER Supabase project. Payments: Stripe Checkout.
           EOF
-          mkdir -p .github/workflows
-          cat > .github/workflows/pages.yml <<'YAML'
-          name: Deploy TAKEOVER
-          on:
-            push:
-              branches: [main]
-            workflow_dispatch:
-          permissions:
-            contents: read
-            pages: write
-            id-token: write
-          concurrency:
-            group: pages
-            cancel-in-progress: true
-          jobs:
-            deploy:
-              environment:
-                name: github-pages
-                url: ${{ steps.deployment.outputs.page_url }}
-              runs-on: ubuntu-latest
-              steps:
-                - uses: actions/checkout@v4
-                - uses: actions/configure-pages@v5
-                  with:
-                    enablement: true
-                - uses: actions/upload-pages-artifact@v3
-                  with:
-                    path: .
-                - name: Deploy to GitHub Pages
-                  id: deployment
-                  uses: actions/deploy-pages@v4
-          YAML
-          rm -f .github/workflows/bootstrap.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Launch TAKEOVER on takeoverspot.com"
+          git add index.html takeover.css takeover-v2.js terms.html privacy.html payments.html content-policy.html contact.html contact.js legal.css CNAME README.md
+          git commit -m "Import TAKEOVER production site"
           git push
