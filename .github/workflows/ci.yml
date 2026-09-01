@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm install jsdom@25 --no-save
-      - name: Verify every spot opens TAKEOVER
+      - name: Syntax check
+        run: node --check takeover-v2.js
+      - name: Verify spot and multi-spot flows
         run: |
           cat > smoke.cjs <<'JS'
           const fs=require('fs');
@@ -31,10 +33,10 @@ jobs:
           let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
           const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
           const w=dom.window;
-          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,owner_since:null,updated_at:null}));
+          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,description:null,offer_text:null,feature_image_url:null,layout_mode:'combined',owner_since:null,updated_at:null}));
           const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
           function builder(table){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:table==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:table==='takeover_config'?cfg:null,error:null})}};return b}
-          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/logo.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/img.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
           w.supabase={createClient:()=>sb};
           w.eval(fs.readFileSync('takeover-v2.js','utf8'));
           setTimeout(()=>{
@@ -48,11 +50,22 @@ jobs:
               if(!w.document.querySelector('#logoFile'))throw new Error(`Spot ${i+1} destroyed logo input`);
               w.document.querySelector('#scrim').click();
             }
+            cells[0].click();
+            if(!w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Single spot should not show multi-spot controls');
+            [...w.document.querySelectorAll('.mini-spot')][1].click();
+            if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Two spots did not unlock display controls');
+            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined two spots did not unlock rich fields');
+            w.document.querySelector('[data-purchase-layout="divided"]').click();
+            if(!w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Divided mode should hide rich fields');
+            w.document.querySelector('[data-purchase-layout="combined"]').click();
+            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined mode should restore rich fields');
+            if(!w.document.querySelector('#featureFile'))throw new Error('Feature image input missing');
+            w.document.querySelector('#scrim').click();
             w.document.querySelector('#takePageBtn').click();
             if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw new Error('TAKE THE PAGE did not open takeover modal');
-            if(!w.document.querySelector('#logoFile'))throw new Error('Full-page flow destroyed logo input');
-            console.log('PASS: all 12 spots and TAKE THE PAGE are clickable.');
+            if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Full-page flow did not expose multi-spot controls');
+            console.log('PASS: all spots, multi-spot modes, rich fields, and full-page flow are working.');
             process.exit(0);
-          },200);
+          },220);
           JS
           node smoke.cjs
