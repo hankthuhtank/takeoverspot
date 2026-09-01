@@ -6,12 +6,18 @@ on:
       - 'index.html'
       - 'takeover-v2.js'
       - 'takeover.css'
+      - 'boot.js'
+      - 'polish.js'
+      - 'polish.css'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
       - 'index.html'
       - 'takeover-v2.js'
       - 'takeover.css'
+      - 'boot.js'
+      - 'polish.js'
+      - 'polish.css'
 permissions:
   contents: read
 jobs:
@@ -24,7 +30,21 @@ jobs:
           node-version: '22'
       - run: npm install jsdom@25 --no-save
       - name: Syntax check
-        run: node --check takeover-v2.js
+        run: |
+          node --check takeover-v2.js
+          node --check polish.js
+          node --check boot.js
+      - name: Verify polish hooks
+        run: |
+          grep -q '4-HOUR SOCIAL SNAPSHOTS' index.html
+          grep -q 'id="moderationModal"' index.html
+          grep -q 'boot.js?v=1' index.html
+          grep -q 'admin_reset_takeover_spot' polish.js
+          grep -q 'takeover_moderation_log' polish.js
+          grep -q 'takeover-reveal-stage' polish.css
+          grep -q 'dryEraseSweep' polish.css
+          grep -q 'width:min(860px' polish.css
+          echo 'PASS: social label, moderation reset, legibility layer, and dry-erase hooks are present.'
       - name: Verify spot and multi-spot flows
         run: |
           cat > smoke.cjs <<'JS'
@@ -64,7 +84,8 @@ jobs:
             w.document.querySelector('#takePageBtn').click();
             if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw new Error('TAKE THE PAGE did not open takeover modal');
             if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Full-page flow did not expose multi-spot controls');
-            console.log('PASS: all spots, multi-spot modes, rich fields, and full-page flow are working.');
+            if(!w.document.querySelector('#moderationModal'))throw new Error('Moderation modal missing');
+            console.log('PASS: all spots, multi-spot modes, rich fields, full-page flow, and moderation markup are working.');
             process.exit(0);
           },220);
           JS
