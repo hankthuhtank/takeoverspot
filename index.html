@@ -33,7 +33,7 @@
 </main>
 
 <footer class="site-legal" aria-label="Legal">
-  <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="contact.html">REPORT / CONTACT</a>
+  <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a>
 </footer>
 
 <div class="scrim" id="scrim"></div>
@@ -104,7 +104,7 @@
     <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
     <p class="rules-copy"><strong>Advertiser content is third-party content.</strong> Advertisers are responsible for their claims, offers, products, services, images, trademarks, and destination websites. TAKEOVER may remove reported or risky content but does not endorse it.</p>
     <p class="rules-copy"><strong>Moderation is intentionally rare.</strong> Weird, ugly, provocative, annoying, competitive, or unpopular ads are not the problem. Owner resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation or rights abuse, credible safety/legal risk, or a comparably extreme issue.</p>
-    <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
+    <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="copyright.html" target="_blank">COPYRIGHT</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
 </section>
 
@@ -114,9 +114,11 @@
     <label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
     <div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div></div>
     <button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>
+    <div class="selector-title"><div><b>SYSTEM HEALTH</b><small>Owner-only launch checks. Green means no action needed.</small></div></div>
+    <div id="adminHealth"><div class="empty">Checking…</div></div>
     <div class="selector-title"><div><b>LIVE BOARD</b><small>Emergency reset only. Taste, bad design, or ordinary controversy are not reset reasons.</small></div></div>
     <div id="adminBoard"></div>
-    <div class="selector-title"><div><b>RECENT PURCHASES</b><small>Latest Stripe takeover attempts.</small></div></div>
+    <div class="selector-title"><div><b>RECENT PURCHASES</b><small>Owner refund controls appear on completed payments.</small></div></div>
     <div id="adminAttempts"></div>
     <div class="selector-title"><div><b>MODERATION HISTORY</b><small>Private owner log of manual resets.</small></div></div>
     <div id="adminModeration"></div>
@@ -132,6 +134,20 @@
     <p class="hint">Resetting returns the spot to available and resets its takeover price. It does not automatically refund the advertiser. The action is privately logged.</p>
     <button class="action danger" id="confirmResetSpot">RESET SPOT TO AVAILABLE</button>
     <button class="secondary" id="moderationCancel">KEEP THE SPOT</button>
+  </div>
+</section>
+
+<section class="panel modal moderation-modal" id="refundModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>OWNER REFUND</span><h2 id="refundTitle">Refund a purchase.</h2></div><button class="close" data-close>×</button></div>
+    <div class="moderation-policy"><b>MONEY MOVES THROUGH STRIPE.</b><p>Issue a full or partial refund here. Refunding money does not remove an ad unless you explicitly choose to reset territory too.</p></div>
+    <div class="field"><label>REFUND AMOUNT</label><input id="refundAmount" type="number" min="0.01" step="0.01"></div>
+    <div class="field"><label>REASON</label><select id="refundReason"><option value="">Choose a reason</option><option value="customer_request">Customer request</option><option value="duplicate">Duplicate charge</option><option value="fraud_suspected">Fraud suspected</option><option value="service_issue">TAKEOVER service issue</option><option value="goodwill">Goodwill / courtesy</option><option value="other">Other</option></select></div>
+    <div class="field"><label>PRIVATE NOTE · OPTIONAL</label><textarea id="refundNote" maxlength="500" placeholder="Internal note. Required if you choose Other."></textarea></div>
+    <label class="toggle"><input id="refundResetTerritory" type="checkbox"> Also return any spots still tied to this exact purchase to AVAILABLE</label>
+    <p class="hint" id="refundHint">Only spots still owned from this exact payment can be reset. Later purchases are never touched.</p>
+    <button class="action danger" id="confirmRefund">ISSUE REFUND</button>
+    <button class="secondary" id="refundCancel">CANCEL</button>
   </div>
 </section>
 
