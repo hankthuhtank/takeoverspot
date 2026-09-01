@@ -1,0 +1,143 @@
+name: TAKEOVER Rich Creative Upgrade
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rich-creative-upgrade.yml']
+permissions:
+  contents: write
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch creative frontend
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('takeover-v2.js')
+          s=p.read_text()
+          def one(old,new,label):
+              global s
+              if old not in s: raise SystemExit(f'{label} anchor missing')
+              s=s.replace(old,new,1)
+          def sub(pattern,repl,label):
+              global s
+              s2,n=re.subn(pattern,repl,s,count=1,flags=re.S)
+              if n!=1: raise SystemExit(f'{label} match count {n}')
+              s=s2
+
+          one("const boardCols='spot_number,current_price,owner_key,company_name,website,logo_url,owner_since,updated_at';",
+              "const boardCols='spot_number,current_price,owner_key,company_name,website,logo_url,description,offer_text,feature_image_url,layout_mode,owner_since,updated_at';",'board cols')
+          one("let mode='takeover',selected=[],bidLevels={},seedSpot=null,selectedLogoUrl=null,toastTimer=null,boardPoll=null,noticeChannel=null;",
+              "let mode='takeover',selected=[],bidLevels={},seedSpot=null,selectedLogoUrl=null,selectedFeatureUrl=null,selectedLayout='combined',toastTimer=null,boardPoll=null,noticeChannel=null;",'state')
+
+          anchor="function setLogoPreview(boxSelector,inputSelector,url,placeholder){const box=$(boxSelector),input=$(inputSelector);if(!box||!input)return;[...box.children].forEach(el=>{if(el!==input)el.remove()});const el=document.createElement(url?'img':'span');if(url){el.src=url;el.alt='Logo preview'}else el.textContent=placeholder;box.insertBefore(el,input)}\n"
+          helpers=anchor+"""function setPicker(selector,attr,value){const picker=$(selector);if(!picker)return;picker.dataset.value=value;picker.querySelectorAll(`[${attr}]`).forEach(b=>b.classList.toggle('active',b.getAttribute(attr)===value))}
+function setPurchaseLayout(value){selectedLayout=value==='divided'?'divided':'combined';setPicker('#purchaseLayoutPicker','data-purchase-layout',selectedLayout);renderCreativeControls()}
+function setAccountLayout(value){setPicker('#accountLayoutPicker','data-account-layout',value==='divided'?'divided':'combined')}
+function renderCreativeControls(){const multi=mode==='takeover'&&selected.length>1,upgrade=$('#purchaseCreativeUpgrade'),rich=$('#purchaseRichFields');if(upgrade)upgrade.hidden=!multi;if(rich)rich.hidden=!(multi&&selectedLayout==='combined')}
+$$('[data-purchase-layout]').forEach(b=>b.onclick=()=>setPurchaseLayout(b.dataset.purchaseLayout));
+$$('[data-account-layout]').forEach(b=>b.onclick=()=>setAccountLayout(b.dataset.accountLayout));
+"""
+          one(anchor,helpers,'creative helpers')
+
+          board_block="""function partitionRectangles(nums){const remain=new Set(nums),out=[];while(remain.size){let best=null;for(const n of remain){const r=Math.floor((n-1)/4),c=(n-1)%4;for(let h=1;h<=3-r;h++)for(let w=1;w<=4-c;w++){const cells=[];let ok=true;for(let y=0;y<h&&ok;y++)for(let x=0;x<w;x++){const cell=(r+y)*4+c+x+1;if(!remain.has(cell)){ok=false;break}cells.push(cell)}if(ok){const score=cells.length*100+w*2+h;if(!best||score>best.score)best={r,c,w,h,cells,score}}}}if(!best){const n=[...remain][0];best={r:Math.floor((n-1)/4),c:(n-1)%4,w:1,h:1,cells:[n],score:1}}best.cells.forEach(n=>remain.delete(n));out.push(best)}return out}
+function rectangles(){const groups=new Map();spots.filter(s=>s.owner_key).forEach(s=>{const mode=s.layout_mode==='divided'?'divided':'combined',key=`${s.owner_key}|${mode}`;if(!groups.has(key))groups.set(key,{mode,items:[]});groups.get(key).items.push(s)});const out=[];for(const [key,g] of groups){const nums=g.items.map(s=>s.spot_number).sort((a,b)=>a-b),parts=g.mode==='divided'?nums.map(n=>({r:Math.floor((n-1)/4),c:(n-1)%4,w:1,h:1,cells:[n]})):partitionRectangles(nums);parts.forEach(r=>out.push({...r,key,mode:g.mode,ad:spot(r.cells[0])}))}return out}
+function compactCreative(s){return `<a class="creative-link compact-link" href="${esc(s.website||'#')}" target="_blank" rel="noopener sponsored">${s.logo_url?`<img class="compact-logo" src="${esc(s.logo_url)}" alt="${esc(s.company_name||'Advertiser')}">`:`<div class="wordmark">${esc(s.company_name||'TAKEOVER')}</div>`}<span class="site">${esc(host(s.website))}</span></a>`}
+function richCreative(s){const media=s.feature_image_url?`<img class="feature-photo" src="${esc(s.feature_image_url)}" alt="">`:s.logo_url?`<img class="media-logo" src="${esc(s.logo_url)}" alt="${esc(s.company_name||'Advertiser')}">`:`<div class="media-wordmark">${esc(s.company_name||'TAKEOVER')}</div>`,smallLogo=s.feature_image_url&&s.logo_url?`<img class="creative-logo" src="${esc(s.logo_url)}" alt="">`:'';return `<a class="creative-link rich-link" href="${esc(s.website||'#')}" target="_blank" rel="noopener sponsored"><div class="creative-rich"><div class="creative-media">${media}</div><div class="creative-copy">${smallLogo}<div class="creative-name">${esc(s.company_name||'TAKEOVER')}</div>${s.description?`<p class="creative-description">${esc(s.description)}</p>`:''}${s.offer_text?`<div class="creative-offer">${esc(s.offer_text)}</div>`:''}<span class="site">${esc(host(s.website))}</span></div></div></a>`}
+function renderBoard(){const grid=$('#gridLines'),acts=$('#spotActions'),terr=$('#territories');grid.innerHTML='';acts.innerHTML='';terr.innerHTML='';for(let n=1;n<=12;n++){const g=document.createElement('div');g.className='grid-cell';grid.appendChild(g);const s=spot(n),a=document.createElement('div');a.className='spot-action';if(!s.owner_key){const b=document.createElement('button');b.className='available-cell';b.innerHTML=shieldBlocked()?`<span>SPOT ${String(n).padStart(2,'0')}</span><b>PROTECTED</b>`:`<span>SPOT ${String(n).padStart(2,'0')}</span><b>TAKE FOR ${cash(minTake(s))}</b>`;b.disabled=shieldBlocked();b.onclick=()=>openTakeover(n);a.appendChild(b)}else{const b=document.createElement('button');b.className='take-pill';b.textContent=own(s)?`DEFEND · ${cash(Number(s.current_price)+Number(config.min_increment))}`:shieldBlocked()?'PROTECTED':`TAKE · ${cash(minTake(s))}`;b.disabled=!own(s)&&shieldBlocked();b.onclick=()=>own(s)?openDefend(n):openTakeover(n);a.appendChild(b)}acts.appendChild(a)}const rects=rectangles();rects.forEach(r=>{const s=r.ad,t=document.createElement('div'),rich=r.mode==='combined'&&r.cells.length>=2;t.className=`territory ${rich?'rich':'compact'} ${r.w>=r.h?'wide':'tall'}`;t.style.left=(r.c*25)+'%';t.style.top=(r.r/3*100)+'%';t.style.width=(r.w*25)+'%';t.style.height=(r.h/3*100)+'%';t.innerHTML=rich?richCreative(s):compactCreative(s);terr.appendChild(t)});$('#board').classList.toggle('full-takeover',rects.length===1&&rects[0].cells.length===12)}
+
+function fillBrandForm"""
+          sub(r"function rectangles\(\)\{.*?\}\nfunction renderBoard\(\)\{.*?\}\n\nfunction fillBrandForm",board_block,'board renderer')
+
+          forms="""function fillBrandForm(){if(profile){$('#companyName').value=profile.company_name||'';$('#companyWebsite').value=profile.website||'';$('#companyDescription').value=profile.description||'';$('#companyOffer').value=profile.offer_text||''}else{$('#companyName').value='';$('#companyWebsite').value='';$('#companyDescription').value='';$('#companyOffer').value=''}setLogoPreview('#logoPreview','#logoFile',selectedLogoUrl,'UPLOAD LOGO · OPTIONAL');setLogoPreview('#featurePreview','#featureFile',selectedFeatureUrl,'ADD ONE FEATURE IMAGE');const logoInput=$('#logoFile'),featureInput=$('#featureFile');if(logoInput)logoInput.value='';if(featureInput)featureInput.value='';setPurchaseLayout(selectedLayout)}
+function openTakeover(n){if(shieldBlocked())return toast(`Full-page takeover protected for ${shieldRemaining()}`);mode='takeover';seedSpot=n;selected=[n];bidLevels={[n]:minTake(spot(n))};selectedLogoUrl=profile?.logo_url||null;selectedFeatureUrl=profile?.feature_image_url||null;selectedLayout=profile?.layout_mode||'combined';fillBrandForm();renderTakeover();openPanel('#takeoverModal')}
+function openPage(){if(shieldBlocked())return toast(`Full-page takeover protected for ${shieldRemaining()}`);mode='takeover';seedSpot=null;selected=Array.from({length:12},(_,i)=>i+1);bidLevels={};selected.forEach(n=>bidLevels[n]=own(spot(n))?Number(spot(n).current_price):minTake(spot(n)));selectedLogoUrl=profile?.logo_url||null;selectedFeatureUrl=profile?.feature_image_url||null;selectedLayout=profile?.layout_mode||'combined';fillBrandForm();renderTakeover();openPanel('#takeoverModal')}
+function openDefend(n){if(!session){saveDraft();return openAuth()}mode='defend';seedSpot=n;selected=[n];bidLevels={[n]:Number(spot(n).current_price)+Number(config.min_increment)};selectedLogoUrl=profile?.logo_url||spot(n).logo_url||null;selectedFeatureUrl=profile?.feature_image_url||spot(n).feature_image_url||null;selectedLayout=profile?.layout_mode||spot(n).layout_mode||'combined';fillBrandForm();renderTakeover();openPanel('#takeoverModal')}
+$('#takePageBtn').onclick=openPage;"""
+          sub(r"function fillBrandForm\(\)\{.*?\}\nfunction openTakeover\(n\)\{.*?\}\nfunction openPage\(\)\{.*?\}\nfunction openDefend\(n\)\{.*?\}\n\$\('#takePageBtn'\)\.onclick=openPage;",forms,'form openers')
+
+          sub(r"function renderTakeover\(\)\{.*?\}\n\$\('#selectAllBtn'\)","""function renderTakeover(){$('#takeoverKicker').textContent=mode==='defend'?'DEFEND YOUR TERRITORY':selected.length===12?'FULL PAGE TAKEOVER':'TAKEOVER';$('#takeoverTitle').textContent=mode==='defend'?`Defend Spot ${seedSpot}`:selected.length===12?'Take the whole page.':selected.length>1?`Take ${selected.length} connected spots.`:`Take Spot ${selected[0]}.`;$('#territoryHint').textContent=mode==='defend'?'Raise your level. You only pay the difference.':'Add touching spots to make your ad larger. Your own cells cost $0 in a larger takeover.';const mini=$('#miniGrid');mini.innerHTML='';for(let n=1;n<=12;n++){const s=spot(n),sel=selected.includes(n),self=own(s),b=document.createElement('button');b.className='mini-spot'+(sel?' selected':'')+(self?' own':'');b.innerHTML=`<b>${String(n).padStart(2,'0')}</b>${self?'YOURS':cash(minTake(s))}`;if(mode==='defend')b.disabled=n!==seedSpot;else if(!sel&&!canAdd(n)&&selected.length!==11)b.disabled=true;b.onclick=()=>toggleSelection(n);mini.appendChild(b)}$('#selectAllBtn').hidden=mode==='defend'||selected.length===12;renderBids();renderCheckoutGate();renderCreativeControls()}
+$('#selectAllBtn')""",'render takeover')
+
+          upload_old="$('#logoFile').onchange=e=>{const f=e.target.files?.[0];if(f)setLogoPreview('#logoPreview','#logoFile',URL.createObjectURL(f),'UPLOAD LOGO · OPTIONAL')};\nasync function uploadSpecificLogo(f){if(!f)return null;if(!session)throw new Error('Sign in first');if(f.size>2097152)throw new Error('Logo must be under 2 MB');if(!['image/png','image/jpeg','image/webp'].includes(f.type))throw new Error('Use PNG, JPG or WebP');const ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg',path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;const {error}=await sb.storage.from('takeover-logos').upload(path,f,{contentType:f.type,upsert:false});if(error)throw error;return sb.storage.from('takeover-logos').getPublicUrl(path).data.publicUrl}\nasync function uploadTakeoverLogo(){const f=$('#logoFile').files?.[0];if(!f)return selectedLogoUrl||profile?.logo_url||null;return uploadSpecificLogo(f)}"
+          upload_new=upload_old+"""
+$('#featureFile').onchange=e=>{const f=e.target.files?.[0];if(f)setLogoPreview('#featurePreview','#featureFile',URL.createObjectURL(f),'ADD ONE FEATURE IMAGE')};
+async function uploadSpecificCreative(f){if(!f)return null;if(!session)throw new Error('Sign in first');if(f.size>4194304)throw new Error('Feature image must be under 4 MB');if(!['image/png','image/jpeg','image/webp'].includes(f.type))throw new Error('Use PNG, JPG or WebP');const ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg',path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;const {error}=await sb.storage.from('takeover-creative').upload(path,f,{contentType:f.type,upsert:false});if(error)throw error;return sb.storage.from('takeover-creative').getPublicUrl(path).data.publicUrl}
+async function uploadTakeoverFeature(){const f=$('#featureFile').files?.[0];if(!f)return selectedFeatureUrl||profile?.feature_image_url||null;return uploadSpecificCreative(f)}"""
+          one(upload_old,upload_new,'upload helpers')
+
+          sub(r"\$\('#checkoutBtn'\)\.onclick=async\(\)=>\{.*?\};\n\nfunction draftData", """$('#checkoutBtn').onclick=async()=>{if(!session)return openAuth();if(!config.purchases_enabled)return toast('Purchases are paused');const company=$('#companyName').value.trim(),website=normalizeWebsite($('#companyWebsite').value),description=$('#companyDescription')?.value.trim()||'',offer=$('#companyOffer')?.value.trim()||'';if(!company)return toast('Enter your company name');if(!website)return toast('Enter your website');const btn=$('#checkoutBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='OPENING STRIPE…';try{selectedLogoUrl=await uploadTakeoverLogo();selectedFeatureUrl=await uploadTakeoverFeature();const bids=selected.map(n=>mode==='takeover'&&own(spot(n))?Number(spot(n).current_price):Math.trunc(Number(bidLevels[n])));const {data,error}=await sb.functions.invoke('takeover-create-checkout',{body:{spot_numbers:selected,bid_levels:bids,company_name:company,website,logo_url:selectedLogoUrl,description,offer_text:offer,feature_image_url:selectedFeatureUrl,layout_mode:selectedLayout,kind:mode}});if(error||data?.error)throw new Error(data?.error||error?.message||'Checkout failed');clearDraft();location.href=data.url}catch(e){toast(e.message);btn.disabled=false;btn.textContent=old}};
+
+function draftData""",'checkout')
+
+          sub(r"function draftData\(\)\{.*?\}\nfunction saveDraft\(\).*?\nfunction readDraft\(\).*?\nfunction clearDraft\(\).*?\nfunction restoreDraft\(d\)\{.*?\}\n", """function draftData(){return{mode,selected,bidLevels,seedSpot,company:$('#companyName')?.value||'',website:$('#companyWebsite')?.value||'',description:$('#companyDescription')?.value||'',offer:$('#companyOffer')?.value||'',logoUrl:selectedLogoUrl,featureUrl:selectedFeatureUrl,layout:selectedLayout}}
+function saveDraft(){if(!selected.length)return;try{localStorage.setItem('takeover_purchase_draft',JSON.stringify(draftData()))}catch{}}
+function readDraft(){try{return JSON.parse(localStorage.getItem('takeover_purchase_draft')||'null')}catch{return null}}
+function clearDraft(){localStorage.removeItem('takeover_purchase_draft')}
+function restoreDraft(d){if(!d?.selected?.length)return;mode=d.mode||'takeover';selected=(d.selected||[]).map(Number);bidLevels=d.bidLevels||{};seedSpot=d.seedSpot||null;selectedLogoUrl=d.logoUrl||profile?.logo_url||null;selectedFeatureUrl=d.featureUrl||profile?.feature_image_url||null;selectedLayout=d.layout||profile?.layout_mode||'combined';fillBrandForm();$('#companyName').value=d.company||profile?.company_name||'';$('#companyWebsite').value=d.website||profile?.website||'';$('#companyDescription').value=d.description||profile?.description||'';$('#companyOffer').value=d.offer||profile?.offer_text||'';setPurchaseLayout(selectedLayout);renderTakeover();openPanel('#takeoverModal')}
+""",'drafts')
+
+          account="""async function renderAccount(){$('#accountEmail').textContent=session?.user?.email||'';$('#accountCompany').value=profile?.company_name||'';$('#accountWebsite').value=profile?.website||'';$('#accountDescription').value=profile?.description||'';$('#accountOffer').value=profile?.offer_text||'';setLogoPreview('#accountLogoPreview','#accountLogo',profile?.logo_url||null,'NO LOGO YET');setLogoPreview('#accountFeaturePreview','#accountFeatureFile',profile?.feature_image_url||null,'NO FEATURE IMAGE');const accountLogo=$('#accountLogo'),accountFeature=$('#accountFeatureFile');if(accountLogo)accountLogo.value='';if(accountFeature)accountFeature.value='';setAccountLayout(profile?.layout_mode||'combined');const mine=profile?spots.filter(s=>s.owner_key===profile.owner_key):[];$('#mySpots').innerHTML=mine.length?mine.map(s=>`<div class="my-spot"><div><b>Spot ${String(s.spot_number).padStart(2,'0')} · ${cash(s.current_price)}</b><small>Yours since ${s.owner_since?new Date(s.owner_since).toLocaleDateString():'—'}</small></div><button class="tiny" data-defend="${s.spot_number}">DEFEND</button></div>`).join(''):'<div class="empty">You don’t own a spot yet.</div>';$$('[data-defend]').forEach(b=>b.onclick=()=>{closePanels();openDefend(Number(b.dataset.defend))});await renderAlerts()}
+$('#saveBrand').onclick=async()=>{if(!session||!profile)return toast('Take your first spot to create a brand profile');const company=$('#accountCompany').value.trim(),website=normalizeWebsite($('#accountWebsite').value),description=$('#accountDescription').value.trim(),offer=$('#accountOffer').value.trim(),layout=$('#accountLayoutPicker')?.dataset.value||'combined';if(!company||!website)return toast('Enter company and website');try{let logo=profile.logo_url,feature=profile.feature_image_url;const lf=$('#accountLogo').files?.[0],ff=$('#accountFeatureFile').files?.[0];if(lf)logo=await uploadSpecificLogo(lf);if(ff)feature=await uploadSpecificCreative(ff);const {error}=await sb.rpc('update_takeover_creative',{p_company_name:company,p_website:website,p_logo_url:logo,p_description:description,p_offer_text:offer,p_feature_image_url:feature,p_layout_mode:layout});if(error)throw error;toast('Ads updated');await loadIdentity();await refreshBoard();await renderAccount()}catch(e){toast(e.message)}};
+$('#accountLogo').onchange=e=>{const f=e.target.files?.[0];if(f)setLogoPreview('#accountLogoPreview','#accountLogo',URL.createObjectURL(f),'NO LOGO YET')};
+$('#accountFeatureFile').onchange=e=>{const f=e.target.files?.[0];if(f)setLogoPreview('#accountFeaturePreview','#accountFeatureFile',URL.createObjectURL(f),'NO FEATURE IMAGE')};"""
+          sub(r"async function renderAccount\(\)\{.*?\}\n\$\('#saveBrand'\)\.onclick=async\(\)=>\{.*?\};\n\$\('#accountLogo'\)\.onchange=.*?;",account,'account creative')
+
+          p.write_text(s)
+
+          c=Path('takeover.css')
+          css=c.read_text()
+          addition=r'''
+
+/* Rich creative + adaptive territory upgrade */
+.field textarea{width:100%;min-height:86px;border:1px solid #d6d6ce;background:#fff;border-radius:10px;padding:11px 12px;outline:none;color:#111;font:inherit;resize:vertical}.field textarea:focus{border-color:#111}.creative-upgrade,.rich-fields{margin-top:14px;padding-top:2px}.segmented{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.seg-option{min-height:58px;border:1px solid #d5d5ce;background:#fff;border-radius:11px;padding:9px 11px;text-align:left;color:#111}.seg-option b{display:block;font:800 9px 'DM Mono',monospace;letter-spacing:.06em}.seg-option span{display:block;margin-top:4px;color:#777;font-size:9px}.seg-option.active{background:#111;color:#fff;border-color:#111}.seg-option.active span{color:#cfcfca}.rich-unlock{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 11px;border:1px solid #d7dfca;background:#f5f8f0;border-radius:10px;margin-top:12px}.rich-unlock b{font:800 8px 'DM Mono',monospace;letter-spacing:.08em}.rich-unlock span{color:#6c7463;font-size:9px;text-align:right}.creative-drop{height:148px;border:1px dashed #bdbdb5;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}.creative-drop.compact{height:108px}.creative-drop img{width:100%;height:100%;object-fit:cover;display:block}.creative-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.creative-drop span{font:700 9px 'DM Mono',monospace;color:#777;letter-spacing:.07em}.territory{border:.5px solid #bdbdb7;padding:0}.territory .creative-link{position:absolute;inset:0;text-decoration:none;color:inherit;background:#fff}.territory.compact .creative-link{display:flex;align-items:center;justify-content:center;padding:clamp(24px,4vw,70px)}.territory.compact .compact-logo{max-width:70%;max-height:62%;object-fit:contain}.territory.rich .creative-link{display:block;padding:0}.creative-rich{width:100%;height:100%;display:grid;grid-template-columns:minmax(0,45%) minmax(0,55%);background:#fff}.creative-media{min-width:0;min-height:0;overflow:hidden;background:#f0f0eb;border-right:1px solid #deded7;display:flex;align-items:center;justify-content:center}.territory .creative-media .feature-photo{width:100%;height:100%;max-width:none;max-height:none;object-fit:cover}.territory .creative-media .media-logo{width:76%;height:76%;max-width:76%;max-height:76%;object-fit:contain}.media-wordmark{font-weight:900;font-size:clamp(20px,3vw,58px);letter-spacing:-.06em;line-height:.9;text-align:center;padding:16px;overflow-wrap:anywhere}.creative-copy{min-width:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:clamp(22px,3.4vw,54px);overflow:hidden}.territory .creative-logo{width:auto;height:auto;max-width:38%;max-height:44px;object-fit:contain;margin-bottom:13px}.creative-name{font-size:clamp(20px,3.1vw,52px);font-weight:900;letter-spacing:-.055em;line-height:.94;overflow-wrap:anywhere}.creative-description{font-size:clamp(10px,1.15vw,16px);line-height:1.45;color:#55554f;margin:12px 0 0;max-width:620px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}.creative-offer{display:inline-flex;margin-top:14px;border:1px solid #111;border-radius:999px;padding:8px 11px;font:800 clamp(8px,.8vw,11px) 'DM Mono',monospace;letter-spacing:.035em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.territory.rich .site{position:static;margin-top:auto;padding-top:14px;font-size:8px;max-width:100%}.territory.rich.tall .creative-rich{grid-template-columns:1fr;grid-template-rows:44% 56%}.territory.rich.tall .creative-media{border-right:0;border-bottom:1px solid #deded7}.territory.rich.tall .creative-copy{padding:clamp(16px,2.5vw,34px)}.territory.rich.tall .creative-description{-webkit-line-clamp:3}.full-takeover .territory.rich .creative-rich{grid-template-columns:minmax(0,48%) minmax(0,52%)}.full-takeover .territory.rich{border:0}.site-legal{position:fixed;z-index:18;left:14px;bottom:14px;display:flex;gap:4px;flex-wrap:wrap;max-width:calc(100vw - 28px);pointer-events:auto}.site-legal a{color:#666;background:rgba(247,247,243,.9);backdrop-filter:blur(10px);border:1px solid #d8d8d1;border-radius:999px;padding:5px 7px;text-decoration:none;font:700 7px 'DM Mono',monospace;letter-spacing:.04em}.site-legal a:hover{color:#000;border-color:#111}
+@media(max-width:720px){.seg-option{min-height:52px;padding:8px}.rich-unlock{display:block}.rich-unlock span{display:block;text-align:left;margin-top:4px}.creative-rich{grid-template-columns:1fr;grid-template-rows:42% 58%}.creative-media{border-right:0;border-bottom:1px solid #deded7}.creative-copy{padding:15px}.creative-name{font-size:clamp(17px,5.5vw,28px)}.creative-description{font-size:9px;margin-top:7px;-webkit-line-clamp:3}.creative-offer{margin-top:8px;padding:6px 8px}.territory.rich .site{padding-top:7px;font-size:6px}.territory .creative-logo{max-height:28px;margin-bottom:7px}.site-legal{left:8px;bottom:8px;right:8px;max-width:none;gap:3px}.site-legal a{font-size:6px;padding:4px 5px}}
+'''
+          if '/* Rich creative + adaptive territory upgrade */' not in css: css+=addition
+          c.write_text(css)
+          PY
+      - name: Syntax check
+        run: node --check takeover-v2.js
+      - name: Multi-spot smoke test
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install jsdom@25 --no-save >/dev/null 2>&1
+          cat > smoke.cjs <<'JS'
+          const fs=require('fs');
+          const {JSDOM}=require('jsdom');
+          let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
+          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
+          const w=dom.window;
+          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,description:null,offer_text:null,feature_image_url:null,layout_mode:'combined',owner_since:null,updated_at:null}));
+          const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
+          function builder(table){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:table==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:table==='takeover_config'?cfg:null,error:null})}};return b}
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/img.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
+          w.supabase={createClient:()=>sb};
+          w.eval(fs.readFileSync('takeover-v2.js','utf8'));
+          setTimeout(()=>{
+            w.document.querySelector('#introGotIt')?.click();
+            const cell=w.document.querySelector('.available-cell'); if(!cell)throw new Error('No empty spot'); cell.click();
+            const modal=w.document.querySelector('#takeoverModal'); if(!modal.classList.contains('on'))throw new Error('Single spot did not open');
+            if(!w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Single spot should not show multi-spot controls');
+            const second=[...w.document.querySelectorAll('.mini-spot')][1]; second.click();
+            if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Two spots did not unlock display controls');
+            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined two spots did not unlock rich fields');
+            w.document.querySelector('[data-purchase-layout="divided"]').click();
+            if(!w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Divided mode should hide rich fields');
+            w.document.querySelector('[data-purchase-layout="combined"]').click();
+            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined mode should restore rich fields');
+            if(!w.document.querySelector('#featureFile'))throw new Error('Feature image input missing');
+            console.log('PASS: single, combined multi-spot, divided multi-spot, and rich creative controls work.');
+            process.exit(0);
+          },180);
+          JS
+          node smoke.cjs
+      - name: Commit upgrade
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add takeover-v2.js takeover.css
+          git commit -m "Add adaptive rich multi-spot creatives"
+          git push
