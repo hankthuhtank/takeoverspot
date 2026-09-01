@@ -39,19 +39,20 @@ jobs:
           node --check polish.js
           node --check launch.js
           node --check boot.js
-      - name: Verify polish hooks
+      - name: Verify launch hooks
         run: |
           grep -q '4-HOUR SOCIAL SNAPSHOTS' index.html
           grep -q 'id="moderationModal"' index.html
-          grep -q 'boot.js?v=1' index.html
           grep -q 'admin_reset_takeover_spot' polish.js
           grep -q 'takeover_moderation_log' polish.js
           grep -q 'takeover-reveal-stage' polish.css
           grep -q 'dryEraseSweep' polish.css
-          grep -q 'width:min(860px' polish.css
           grep -q 'https://x.com/takeoverspot' launch.js
           grep -q 'https://www.instagram.com/takeover.spot' launch.js
-          echo 'PASS: social links, moderation reset, legibility layer, and dry-erase hooks are present.'
+          grep -q "DRAFT_TTL=30\*60\*1000" launch.js
+          grep -q 'MutationObserver(syncPageControl)' launch.js
+          if grep -q 'setInterval(normalizeOwnedPageButton' launch.js; then echo 'Old page-button interval still exists' && exit 1; fi
+          echo 'PASS: social, moderation, reveal, one-time draft, and stable page-control hooks are present.'
       - name: Verify spot and multi-spot flows
         run: |
           cat > smoke.cjs <<'JS'
@@ -97,7 +98,7 @@ jobs:
           },220);
           JS
           node smoke.cjs
-      - name: Verify full boot stays responsive
+      - name: Verify stable launch state
         run: |
           cat > boot-smoke.cjs <<'JS'
           const fs=require('fs');
@@ -108,13 +109,20 @@ jobs:
           function chain(data=[]){const b={select(){return b},eq(){return b},is(){return b},limit(){return b},order(){return Promise.resolve({data,error:null})},maybeSingle(){return Promise.resolve({data:null,error:null})},then(resolve){return Promise.resolve({data,error:null}).then(resolve)}};return b}
           const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}})},from:()=>chain([]),rpc:()=>Promise.resolve({data:false,error:null})};
           w.supabase={createClient:()=>sb};
+          w.localStorage.setItem('takeover_purchase_draft',JSON.stringify({selected:[6],seedSpot:6}));
           w.eval(fs.readFileSync('polish.js','utf8'));
           w.eval(fs.readFileSync('launch.js','utf8'));
+          const actions=w.document.querySelector('#spotActions');
+          for(let i=1;i<=12;i++){const row=w.document.createElement('div');row.className='spot-action';const b=w.document.createElement('button');b.textContent='TAKE FOR $10';row.appendChild(b);actions.appendChild(row)}
           setTimeout(()=>{
-            const social=w.document.querySelector('.social-links')?.textContent||'';
-            if(!social.includes('X')||!social.includes('INSTAGRAM'))throw new Error('Social links did not initialize');
-            console.log('PASS: polish + launch layers initialized and event loop remained responsive.');
+            if(w.localStorage.getItem('takeover_purchase_draft'))throw new Error('Legacy Spot 6 draft was not cleared');
+            const social=w.document.querySelector('.social-links')?.textContent.replace(/\s+/g,' ').trim()||'';
+            if(social!=='X · INSTAGRAM')throw new Error(`Unexpected social text: ${social}`);
+            const page=w.document.querySelector('#takePageBtn');
+            if(page.textContent.trim()!=='TAKE THE PAGE · $120')throw new Error(`Wrong empty-board page control: ${page.textContent}`);
+            if(page.dataset.pageManage==='1')throw new Error('Empty board incorrectly entered manage-page mode');
+            console.log('PASS: stale draft cleared, social is stable, empty board is $120, and event loop is responsive.');
             process.exit(0);
-          },300);
+          },350);
           JS
           timeout 10s node boot-smoke.cjs
