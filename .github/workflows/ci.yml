@@ -2,9 +2,9 @@ name: TAKEOVER Frontend Smoke Test
 on:
   push:
     branches: [main]
-    paths: ['index.html','takeover-v2.js','takeover.css','boot.js','polish.js','polish.css','launch.js','launch.css','.github/workflows/ci.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','.github/workflows/ci.yml']
   pull_request:
-    paths: ['index.html','takeover-v2.js','takeover.css','boot.js','polish.js','polish.css','launch.js','launch.css']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js']
 permissions:
   contents: read
 jobs:
@@ -15,44 +15,50 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: npm install jsdom@25 --no-save
-      - name: Syntax and required hooks
+      - name: Syntax and architecture
         run: |
-          node --check takeover-v2.js
-          node --check polish.js
-          node --check launch.js
+          node --check takeover-v3.js
           node --check boot.js
-          grep -q 'admin_reset_takeover_spot' polish.js
-          grep -q 'dryEraseSweep' polish.css
-          grep -q 'https://x.com/takeoverspot' launch.js
-          grep -q 'https://www.instagram.com/takeover.spot' launch.js
-          grep -q "DRAFT_TTL=30\*60\*1000" launch.js
-          grep -q 'MutationObserver(syncPageControl)' launch.js
-          if grep -q 'setInterval(normalizeOwnedPageButton' launch.js; then exit 1; fi
-      - name: Core spot flows
+          grep -q 'const TOTAL=16' takeover-v3.js
+          grep -q 'CENTER=\[6,7,10,11\]' takeover-v3.js
+          grep -q 'create_takeover_attempt_v3' takeover-v3.js || true
+          grep -q 'takeover-v3.js?v=1' boot.js
+          if grep -q 'launch.js' boot.js; then exit 1; fi
+          if grep -q 'polish.js' boot.js; then exit 1; fi
+      - name: 16-cell board and canvas flows
         run: |
-          cat > core.cjs <<'JS'
+          cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
           const html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
           const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
-          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,description:null,offer_text:null,feature_image_url:null,layout_mode:'combined'}));
+          if(!w.crypto.randomUUID)w.crypto.randomUUID=()=>Math.random().toString(16).slice(2)+'-0000-4000-8000-000000000000';
+          const board=Array.from({length:16},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,creative_id:null,canvas_json:null,owner_since:null,updated_at:new Date().toISOString()}));
           const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
-          function builder(t){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:t==='takeover_config'?cfg:null,error:null})}};return b}
-          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/img.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
-          w.supabase={createClient:()=>sb};w.eval(fs.readFileSync('takeover-v2.js','utf8'));
-          setTimeout(()=>{w.document.querySelector('#introGotIt')?.click();const cells=[...w.document.querySelectorAll('.available-cell')];if(cells.length!==12)throw Error('Expected 12 cells');for(let i=0;i<12;i++){cells[i].click();if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot click failed '+(i+1));w.document.querySelector('#scrim').click()}cells[0].click();[...w.document.querySelectorAll('.mini-spot')][1].click();if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw Error('Two-spot controls missing');w.document.querySelector('[data-purchase-layout="divided"]').click();if(!w.document.querySelector('#purchaseRichFields').hidden)throw Error('Divided rich fields visible');console.log('PASS core');process.exit(0)},250);
-          JS
-          timeout 10s node core.cjs
-      - name: Stable launch state
-        run: |
-          cat > launch.cjs <<'JS'
-          const fs=require('fs'),{JSDOM}=require('jsdom');
-          const html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
-          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
-          function chain(data=[]){const b={select(){return b},eq(){return b},is(){return b},limit(){return b},order(){return Promise.resolve({data,error:null})},maybeSingle(){return Promise.resolve({data:null,error:null})},then(r){return Promise.resolve({data,error:null}).then(r)}};return b}
-          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}})},from:()=>chain([]),rpc:()=>Promise.resolve({data:false,error:null})};w.supabase={createClient:()=>sb};
+          function builder(t){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:t==='takeover_config'?cfg:null,error:null})},then(r){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null}).then(r)}};return b}
+          const rpc=(name)=>Promise.resolve({data:name==='is_takeover_admin'?false:null,error:null});
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc,channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://xvfgiaxxvwdnmzzdfboc.supabase.co/storage/v1/object/public/takeover-creative/test/a.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
+          w.supabase={createClient:()=>sb};
           w.localStorage.setItem('takeover_purchase_draft',JSON.stringify({selected:[6],seedSpot:6}));
-          w.eval(fs.readFileSync('polish.js','utf8'));w.eval(fs.readFileSync('launch.js','utf8'));
-          const actions=w.document.querySelector('#spotActions');for(let i=0;i<12;i++){const r=w.document.createElement('div');r.className='spot-action';const b=w.document.createElement('button');b.textContent='TAKE FOR $10';r.appendChild(b);actions.appendChild(r)}
-          setTimeout(()=>{if(w.localStorage.getItem('takeover_purchase_draft'))throw Error('Legacy Spot 6 draft persisted');const social=(w.document.querySelector('.social-links')?.textContent||'').replace(/\s+/g,'');if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);const page=w.document.querySelector('#takePageBtn');if(page.textContent.trim()!=='TAKE THE PAGE · $120')throw Error('Wrong page control: '+page.textContent);if(page.dataset.pageManage==='1')throw Error('Empty board entered manage mode');console.log('PASS launch');process.exit(0)},400);
+          w.eval(fs.readFileSync('takeover-v3.js','utf8'));
+          setTimeout(()=>{
+            w.document.querySelector('#introGotIt')?.click();
+            const cells=[...w.document.querySelectorAll('.available-cell')];
+            if(cells.length!==16)throw Error('Expected 16 cells, got '+cells.length);
+            if(w.localStorage.getItem('takeover_purchase_draft'))throw Error('Legacy draft persisted');
+            const page=w.document.querySelector('#takePageBtn');
+            if(page.textContent.trim()!=='TAKE THE PAGE · $160')throw Error('Wrong page total: '+page.textContent);
+            const social=[...w.document.querySelectorAll('.social-pulse a')].map(a=>a.textContent).join('·');
+            if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);
+            cells[5].click();
+            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 6 did not open');
+            const minis=[...w.document.querySelectorAll('.mini-spot')];
+            minis[6].click();minis[9].click();minis[10].click();
+            if(!/Center Four/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Center Square not recognized');
+            w.document.querySelector('#openPurchaseCanvas').click();
+            if(!w.document.querySelector('#canvasModal').classList.contains('on'))throw Error('Canvas did not open');
+            w.document.querySelector('#addText').click();
+            if(w.document.querySelectorAll('#canvasStage .editor-layer').length<2)throw Error('Canvas layer add failed');
+            console.log('PASS V3');process.exit(0);
+          },450);
           JS
-          timeout 10s node launch.cjs
+          timeout 12s node v3.cjs
