@@ -51,20 +51,15 @@ async function renderModerationHistory(){
   $('#adminModeration').innerHTML=rows.length?rows.map(m=>`<div class="admin-row moderation-row"><span>${String(m.spot_number).padStart(2,'0')}</span><div><b>${esc(m.previous_company_name||'Unknown advertiser')}</b><small>${esc(reasonLabel(m.reason))} · ${new Date(m.created_at).toLocaleString()}</small>${m.note?`<p>${esc(m.note)}</p>`:''}</div></div>`).join(''):'<div class="empty">No moderation resets. Good.</div>';
 }
 
-function upgradeAdminButtons(){
-  $$('[data-clear]').forEach(btn=>{btn.textContent='RESET';btn.classList.add('danger');btn.dataset.moderationReset=btn.dataset.clear});
-  if($('#adminPanel')?.classList.contains('on'))renderModerationHistory();
-}
-
+/* No MutationObserver here. Admin rows are rendered explicitly by launch.js. */
 document.addEventListener('click',e=>{
   const reset=e.target.closest?.('[data-moderation-reset]');
   if(reset){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openReset(reset.dataset.moderationReset);return}
-  if(e.target.closest?.('#adminBtn'))setTimeout(()=>{upgradeAdminButtons();renderModerationHistory()},80);
+  if(e.target.closest?.('#adminBtn'))setTimeout(renderModerationHistory,240);
 },true);
 
 $('#confirmResetSpot')?.addEventListener('click',confirmReset);
 $('#moderationCancel')?.addEventListener('click',()=>{moderationSpot=null;closeModerationPanel()});
-new MutationObserver(upgradeAdminButtons).observe(document.body,{subtree:true,childList:true});
 
 /* Capture what occupied the cells before Stripe so the successful buyer sees it erased. */
 function selectedSpotNumbers(){return $$('#miniGrid .mini-spot').map((b,i)=>b.classList.contains('selected')?i+1:null).filter(Boolean)}
