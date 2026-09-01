@@ -79,7 +79,7 @@ jobs:
         run: |
           npm init -y >/dev/null 2>&1
           npm install jsdom@25 --no-save >/dev/null 2>&1
-          cat > /tmp/smoke.cjs <<'JS'
+          cat > smoke.cjs <<'JS'
           const fs=require('fs');
           const {JSDOM}=require('jsdom');
           let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
@@ -114,9 +114,10 @@ jobs:
             process.exit(0);
           },150);
           JS
-          node /tmp/smoke.cjs
+          node smoke.cjs
       - name: Commit hardening
         run: |
+          rm -rf node_modules package.json package-lock.json smoke.cjs
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html takeover-v2.js takeover.css
