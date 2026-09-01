@@ -21,7 +21,6 @@ jobs:
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
           grep -q 'CENTER=\[6,7,10,11\]' takeover-v3.js
-          grep -q 'create_takeover_attempt_v3' takeover-v3.js || true
           grep -q 'takeover-v3.js?v=1' boot.js
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
@@ -51,9 +50,9 @@ jobs:
             if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);
             cells[5].click();
             if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 6 did not open');
-            const minis=[...w.document.querySelectorAll('.mini-spot')];
-            minis[6].click();minis[9].click();minis[10].click();
-            if(!/Center Four/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Center Square not recognized');
+            const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
+            clickMini(7);clickMini(10);clickMini(11);
+            if(!/Center Four/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Center Square not recognized: '+w.document.querySelector('#takeoverTitle').textContent);
             w.document.querySelector('#openPurchaseCanvas').click();
             if(!w.document.querySelector('#canvasModal').classList.contains('on'))throw Error('Canvas did not open');
             w.document.querySelector('#addText').click();
