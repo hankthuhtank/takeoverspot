@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#f7f7f3">
 <title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
-<meta name="description" content="Take over a piece of the page. Keep it until somebody pays more.">
+<meta name="description" content="Buy part of the webpage. Make it yours. Keep it until somebody pays more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -18,7 +18,7 @@
   <div class="spot-actions" id="spotActions"></div>
   <div class="takeover-reveal-stage" id="takeoverRevealStage" hidden></div>
   <div class="chrome">
-    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><em>X + INSTAGRAM</em></div></div>
+    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><em>X · INSTAGRAM</em></div></div>
     <div class="controls">
       <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
       <span class="chrome-btn primary" id="shieldFlag" hidden>FULL TAKEOVER PROTECTED</span>
@@ -42,12 +42,12 @@
   <div class="panel-inner">
     <div class="intro-kicker">WELCOME TO TAKEOVER</div>
     <h1 class="intro-title">This webpage belongs to<br><em>whoever wants it most.</em></h1>
-    <p class="intro-copy">Pick a spot. Pay more than its current owner. It becomes yours until somebody pays more than you. Own touching spots and choose whether they become one larger ad or stay divided. Own all twelve and you own the page.</p>
+    <p class="intro-copy">Pick a spot. Pay more than its current owner. Design the territory yourself. Own touching spots to build something larger. Own all sixteen and you own the page.</p>
     <div class="rules-list">
-      <div class="rule"><b>1 · Pay more and it becomes yours.</b><span>Available spots start at the listed price. Occupied spots can be taken for $1 more.</span></div>
-      <div class="rule"><b>2 · You keep it until somebody takes it.</b><span>No daily reset. No countdown. Ownership is indefinite.</span></div>
-      <div class="rule"><b>3 · Build a larger ad from neighboring spots.</b><span>Own multiple touching spots and choose Combined for one larger creative or Divided to keep visible individual cells.</span></div>
-      <div class="rule"><b>4 · Take all twelve to own the page.</b><span>A full-page takeover is exclusive for 24 hours. After the shield expires, it lasts until somebody breaks it by taking one spot back.</span></div>
+      <div class="rule"><b>1 · Pay more and it becomes yours.</b><span>Available spots start at the listed price. Occupied spots can be taken for the displayed increase.</span></div>
+      <div class="rule"><b>2 · Keep it until somebody takes it.</b><span>No daily reset. No countdown. Ownership is indefinite.</span></div>
+      <div class="rule"><b>3 · Make the territory yours.</b><span>SPOT CANVAS gives you backgrounds, text, images, buttons, fonts, drag-and-resize placement, and Combined or Divided display.</span></div>
+      <div class="rule"><b>4 · Take all sixteen to own the page.</b><span>A full-page takeover is exclusive for 24 hours. After the shield expires, it lasts until somebody breaks it by taking one spot back.</span></div>
     </div>
     <button class="action" id="introGotIt">I GET IT</button>
   </div>
@@ -56,40 +56,23 @@
 <section class="panel modal" id="takeoverModal">
   <div class="panel-inner">
     <div class="panel-head"><div><span id="takeoverKicker">TAKEOVER</span><h2 id="takeoverTitle">Take a spot.</h2></div><button class="close" data-close>×</button></div>
-    <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 12</button></div>
+    <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 16</button></div>
     <div class="mini-grid" id="miniGrid"></div>
     <div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>
-    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">PNG, JPG or WebP. If you skip the logo, your company name becomes the ad.</p></div>
-
-    <div class="creative-upgrade" id="purchaseCreativeUpgrade" hidden>
-      <div class="selector-title"><div><b>MULTI-SPOT DISPLAY</b><small>Choose how your touching spots should look.</small></div></div>
-      <div class="segmented" id="purchaseLayoutPicker" data-value="combined">
-        <button type="button" class="seg-option active" data-purchase-layout="combined"><b>COMBINED</b><span>One larger ad</span></button>
-        <button type="button" class="seg-option" data-purchase-layout="divided"><b>DIVIDED</b><span>Keep cell borders</span></button>
-      </div>
-      <p class="hint">Combined territory automatically reshapes if you later lose a spot. If only one cell remains, it falls back to the compact one-spot design.</p>
-    </div>
-
-    <div class="rich-fields" id="purchaseRichFields" hidden>
-      <div class="rich-unlock"><b>EXPANDED CREATIVE UNLOCKED</b><span>Two or more combined spots have room for more than a logo.</span></div>
-      <div class="field"><label>SHORT DESCRIPTION · OPTIONAL</label><textarea id="companyDescription" maxlength="220" placeholder="What do you do? Keep it short and useful."></textarea><p class="hint">Maximum 220 characters.</p></div>
-      <div class="field"><label>OFFER / PRICING LINE · OPTIONAL</label><input id="companyOffer" maxlength="80" placeholder="Example: Home inspections from $299"></div>
-      <div class="field"><label>FEATURE IMAGE · OPTIONAL</label><div class="creative-drop" id="featurePreview"><span>ADD ONE FEATURE IMAGE</span><input id="featureFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">One supporting image, up to 4 MB. It appears only when enough combined space exists.</p></div>
-    </div>
-
+    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">Use a logo as a starting point, then build the actual placement in SPOT CANVAS.</p></div>
     <div class="bid-list" id="bidRows"></div>
     <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
     <div id="signinGate"><p class="hint">No passwords. Sign in with a one-click email link, then Stripe handles the payment.</p><button class="action" id="continueSignin">SIGN IN TO CONTINUE</button></div>
     <div id="signedAs" class="hint" hidden></div>
     <button class="action" id="checkoutBtn" hidden>PAY & TAKE OVER</button>
-    <p class="hint">A full 12-spot purchase gets 24 hours of exclusive protection. If the board changes or protection activates while you are in Checkout, the purchase is rejected and automatically refunded instead of assigning stale territory.</p>
+    <p class="hint">A full 16-spot purchase gets 24 hours of exclusive protection. If the board changes while you are in Checkout, a stale purchase is rejected and automatically refunded instead of overwriting valid territory.</p>
   </div>
 </section>
 
 <section class="panel modal" id="authModal">
   <div class="panel-inner">
     <div class="panel-head"><div><span>PASSWORDLESS ACCESS</span><h2>Enter your email.</h2></div><button class="close" data-close>×</button></div>
-    <p class="hint">We send one secure sign-in link. No username. No password. The same email manages every spot you own.</p>
+    <p class="hint">We send one secure sign-in link. No username. No password. The same email manages every territory you own.</p>
     <div class="field"><label>EMAIL</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@company.com"></div>
     <button class="action" id="sendMagicLink">EMAIL ME A SIGN-IN LINK</button>
     <div class="success-state" id="authSent" hidden></div>
@@ -98,22 +81,9 @@
 
 <aside class="panel drawer" id="accountPanel">
   <div class="panel-inner">
-    <div class="panel-head"><div><span>YOUR TERRITORY</span><h2>My spots.</h2></div><button class="close" data-close>×</button></div>
+    <div class="panel-head"><div><span>YOUR TERRITORY</span><h2>My territory.</h2></div><button class="close" data-close>×</button></div>
     <div class="hint" id="accountEmail"></div>
-    <div class="field"><label>COMPANY</label><input id="accountCompany" maxlength="80"></div>
-    <div class="field"><label>WEBSITE</label><input id="accountWebsite" maxlength="300"></div>
-    <div class="field"><label>LOGO</label><div class="logo-drop" id="accountLogoPreview"><span>NO LOGO YET</span><input id="accountLogo" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
-    <div class="field"><label>SHORT DESCRIPTION · FOR COMBINED MULTI-SPOT ADS</label><textarea id="accountDescription" maxlength="220" placeholder="What your business does"></textarea></div>
-    <div class="field"><label>OFFER / PRICING LINE</label><input id="accountOffer" maxlength="80" placeholder="Example: Consultations from $99"></div>
-    <div class="field"><label>FEATURE IMAGE</label><div class="creative-drop compact" id="accountFeaturePreview"><span>NO FEATURE IMAGE</span><input id="accountFeatureFile" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
-    <div class="selector-title"><div><b>DISPLAY STYLE</b><small>Applied to your touching spots. You can switch this any time.</small></div></div>
-    <div class="segmented" id="accountLayoutPicker" data-value="combined">
-      <button type="button" class="seg-option active" data-account-layout="combined"><b>COMBINED</b><span>Merge touching spots</span></button>
-      <button type="button" class="seg-option" data-account-layout="divided"><b>DIVIDED</b><span>Keep every cell separate</span></button>
-    </div>
-    <p class="hint">Combined ads automatically reflow as your territory changes. Rich description, offer, and feature image only appear on combined blocks with at least two cells.</p>
-    <button class="secondary" id="saveBrand">UPDATE MY ADS</button>
-    <div class="selector-title"><div><b>OWNED SPOTS</b><small>Raise a spot whenever you want to make it harder to take.</small></div></div>
+    <div class="selector-title"><div><b>OWNED TERRITORY</b><small>Edit each creative separately. Click a spot chip to defend its price.</small></div></div>
     <div id="mySpots"></div>
     <div class="selector-title"><div><b>ALERTS</b><small>Outbids and payment updates.</small></div></div>
     <div id="alerts"></div>
@@ -125,14 +95,15 @@
   <div class="panel-inner">
     <div class="panel-head"><div><span>THE WHOLE GAME</span><h2>Four rules.</h2></div><button class="close" data-close>×</button></div>
     <div class="rules-list">
-      <div class="rule"><b>Pay more. Take the spot.</b><span>Minimum increase is $1 unless the board owner changes it globally.</span></div>
+      <div class="rule"><b>Pay more. Take the spot.</b><span>The current required takeover price is always shown before payment.</span></div>
       <div class="rule"><b>Keep it until you are outbid.</b><span>There is no timer and no automatic reset.</span></div>
-      <div class="rule"><b>Choose Combined or Divided.</b><span>Touching spots can become a larger creative or remain visibly separate. Combined layouts automatically adapt when territory changes.</span></div>
-      <div class="rule"><b>Own all twelve. Own the page.</b><span>Buying all twelve gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
+      <div class="rule"><b>Your territory is your canvas.</b><span>Customize each territory independently with safe structured design controls. No custom HTML or scripts.</span></div>
+      <div class="rule"><b>Own all sixteen. Own the page.</b><span>Buying all sixteen gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
     </div>
+    <p class="rules-copy"><strong>The Center Four are Spots 06, 07, 10 and 11.</strong> Together they form a perfect square in the middle of the 4×4 board. They are not artificially repriced; advertisers decide what that location is worth.</p>
     <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
     <p class="rules-copy"><strong>Advertiser content is third-party content.</strong> Advertisers are responsible for their claims, offers, products, services, images, trademarks, and destination websites. TAKEOVER may remove reported or risky content but does not endorse it.</p>
-    <p class="rules-copy"><strong>Moderation is intentionally rare.</strong> Weird, ugly, provocative, annoying, competitive, or unpopular ads are not the problem. Owner resets are reserved for fraud/scams, malware/phishing, illegal or clearly dangerous activity, impersonation or serious rights abuse, credible safety/legal risk, or a comparably extreme issue.</p>
+    <p class="rules-copy"><strong>Moderation is intentionally rare.</strong> Weird, ugly, provocative, annoying, competitive, or unpopular ads are not the problem. Owner resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation or rights abuse, credible safety/legal risk, or a comparably extreme issue.</p>
     <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
 </section>
@@ -166,6 +137,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="boot.js?v=1"></script>
+<script src="boot.js?v=2"></script>
 </body>
 </html>
