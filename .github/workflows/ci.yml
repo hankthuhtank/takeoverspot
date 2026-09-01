@@ -1,0 +1,58 @@
+name: TAKEOVER Frontend Smoke Test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'takeover-v2.js'
+      - 'takeover.css'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'takeover-v2.js'
+      - 'takeover.css'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install jsdom@25 --no-save
+      - name: Verify every spot opens TAKEOVER
+        run: |
+          cat > smoke.cjs <<'JS'
+          const fs=require('fs');
+          const {JSDOM}=require('jsdom');
+          let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
+          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
+          const w=dom.window;
+          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,owner_since:null,updated_at:null}));
+          const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
+          function builder(table){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:table==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:table==='takeover_config'?cfg:null,error:null})}};return b}
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/logo.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
+          w.supabase={createClient:()=>sb};
+          w.eval(fs.readFileSync('takeover-v2.js','utf8'));
+          setTimeout(()=>{
+            w.document.querySelector('#introGotIt')?.click();
+            const cells=[...w.document.querySelectorAll('.available-cell')];
+            if(cells.length!==12)throw new Error(`Expected 12 clickable spots, got ${cells.length}`);
+            for(let i=0;i<cells.length;i++){
+              cells[i].click();
+              const modal=w.document.querySelector('#takeoverModal');
+              if(!modal.classList.contains('on'))throw new Error(`Spot ${i+1} did not open takeover modal`);
+              if(!w.document.querySelector('#logoFile'))throw new Error(`Spot ${i+1} destroyed logo input`);
+              w.document.querySelector('#scrim').click();
+            }
+            w.document.querySelector('#takePageBtn').click();
+            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw new Error('TAKE THE PAGE did not open takeover modal');
+            if(!w.document.querySelector('#logoFile'))throw new Error('Full-page flow destroyed logo input');
+            console.log('PASS: all 12 spots and TAKE THE PAGE are clickable.');
+            process.exit(0);
+          },200);
+          JS
+          node smoke.cjs
