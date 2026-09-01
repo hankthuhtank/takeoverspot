@@ -21,7 +21,8 @@ jobs:
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
           grep -q 'CENTER=\[6,7,10,11\]' takeover-v3.js
-          grep -q 'takeover-v3.js?v=1' boot.js
+          grep -q 'takeover-v3.js?v=2' boot.js
+          grep -q 'Promise.resolve(rawRpc' boot.js
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
       - name: 16-cell board and canvas flows
