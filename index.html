@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="takeover.css?v=2">
+<link rel="stylesheet" href="takeover.css?v=3">
 </head>
 <body>
 <main class="board" id="board">
@@ -31,17 +31,21 @@
   </div>
 </main>
 
+<footer class="site-legal" aria-label="Legal">
+  <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="contact.html">REPORT / CONTACT</a>
+</footer>
+
 <div class="scrim" id="scrim"></div>
 
 <section class="panel modal" id="introModal">
   <div class="panel-inner">
     <div class="intro-kicker">WELCOME TO TAKEOVER</div>
     <h1 class="intro-title">This webpage belongs to<br><em>whoever wants it most.</em></h1>
-    <p class="intro-copy">Pick a spot. Pay more than its current owner. It becomes yours until somebody pays more than you. Own touching spots and your ad grows. Own all twelve and you own the page.</p>
+    <p class="intro-copy">Pick a spot. Pay more than its current owner. It becomes yours until somebody pays more than you. Own touching spots and choose whether they become one larger ad or stay divided. Own all twelve and you own the page.</p>
     <div class="rules-list">
       <div class="rule"><b>1 · Pay more and it becomes yours.</b><span>Available spots start at the listed price. Occupied spots can be taken for $1 more.</span></div>
       <div class="rule"><b>2 · You keep it until somebody takes it.</b><span>No daily reset. No countdown. Ownership is indefinite.</span></div>
-      <div class="rule"><b>3 · Grow into neighboring spots.</b><span>Connected spots visually merge into larger advertising territory.</span></div>
+      <div class="rule"><b>3 · Build a larger ad from neighboring spots.</b><span>Own multiple touching spots and choose Combined for one larger creative or Divided to keep visible individual cells.</span></div>
       <div class="rule"><b>4 · Take all twelve to own the page.</b><span>A full-page takeover is exclusive for 24 hours. After the shield expires, it lasts until somebody breaks it by taking one spot back.</span></div>
     </div>
     <button class="action" id="introGotIt">I GET IT</button>
@@ -56,6 +60,23 @@
     <div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div>
     <div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div>
     <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">PNG, JPG or WebP. If you skip the logo, your company name becomes the ad.</p></div>
+
+    <div class="creative-upgrade" id="purchaseCreativeUpgrade" hidden>
+      <div class="selector-title"><div><b>MULTI-SPOT DISPLAY</b><small>Choose how your touching spots should look.</small></div></div>
+      <div class="segmented" id="purchaseLayoutPicker" data-value="combined">
+        <button type="button" class="seg-option active" data-purchase-layout="combined"><b>COMBINED</b><span>One larger ad</span></button>
+        <button type="button" class="seg-option" data-purchase-layout="divided"><b>DIVIDED</b><span>Keep cell borders</span></button>
+      </div>
+      <p class="hint">Combined territory automatically reshapes if you later lose a spot. If only one cell remains, it falls back to the compact one-spot design.</p>
+    </div>
+
+    <div class="rich-fields" id="purchaseRichFields" hidden>
+      <div class="rich-unlock"><b>EXPANDED CREATIVE UNLOCKED</b><span>Two or more combined spots have room for more than a logo.</span></div>
+      <div class="field"><label>SHORT DESCRIPTION · OPTIONAL</label><textarea id="companyDescription" maxlength="220" placeholder="What do you do? Keep it short and useful."></textarea><p class="hint">Maximum 220 characters.</p></div>
+      <div class="field"><label>OFFER / PRICING LINE · OPTIONAL</label><input id="companyOffer" maxlength="80" placeholder="Example: Home inspections from $299"></div>
+      <div class="field"><label>FEATURE IMAGE · OPTIONAL</label><div class="creative-drop" id="featurePreview"><span>ADD ONE FEATURE IMAGE</span><input id="featureFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">One supporting image, up to 4 MB. It appears only when enough combined space exists.</p></div>
+    </div>
+
     <div class="bid-list" id="bidRows"></div>
     <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
     <div id="signinGate"><p class="hint">No passwords. Sign in with a one-click email link, then Stripe handles the payment.</p><button class="action" id="continueSignin">SIGN IN TO CONTINUE</button></div>
@@ -82,6 +103,15 @@
     <div class="field"><label>COMPANY</label><input id="accountCompany" maxlength="80"></div>
     <div class="field"><label>WEBSITE</label><input id="accountWebsite" maxlength="300"></div>
     <div class="field"><label>LOGO</label><div class="logo-drop" id="accountLogoPreview"><span>NO LOGO YET</span><input id="accountLogo" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
+    <div class="field"><label>SHORT DESCRIPTION · FOR COMBINED MULTI-SPOT ADS</label><textarea id="accountDescription" maxlength="220" placeholder="What your business does"></textarea></div>
+    <div class="field"><label>OFFER / PRICING LINE</label><input id="accountOffer" maxlength="80" placeholder="Example: Consultations from $99"></div>
+    <div class="field"><label>FEATURE IMAGE</label><div class="creative-drop compact" id="accountFeaturePreview"><span>NO FEATURE IMAGE</span><input id="accountFeatureFile" type="file" accept="image/png,image/jpeg,image/webp"></div></div>
+    <div class="selector-title"><div><b>DISPLAY STYLE</b><small>Applied to your touching spots. You can switch this any time.</small></div></div>
+    <div class="segmented" id="accountLayoutPicker" data-value="combined">
+      <button type="button" class="seg-option active" data-account-layout="combined"><b>COMBINED</b><span>Merge touching spots</span></button>
+      <button type="button" class="seg-option" data-account-layout="divided"><b>DIVIDED</b><span>Keep every cell separate</span></button>
+    </div>
+    <p class="hint">Combined ads automatically reflow as your territory changes. Rich description, offer, and feature image only appear on combined blocks with at least two cells.</p>
     <button class="secondary" id="saveBrand">UPDATE MY ADS</button>
     <div class="selector-title"><div><b>OWNED SPOTS</b><small>Raise a spot whenever you want to make it harder to take.</small></div></div>
     <div id="mySpots"></div>
@@ -97,11 +127,12 @@
     <div class="rules-list">
       <div class="rule"><b>Pay more. Take the spot.</b><span>Minimum increase is $1 unless the board owner changes it globally.</span></div>
       <div class="rule"><b>Keep it until you are outbid.</b><span>There is no timer and no automatic reset.</span></div>
-      <div class="rule"><b>Defend by raising your own price.</b><span>You only pay the difference between your current level and your new level.</span></div>
+      <div class="rule"><b>Choose Combined or Divided.</b><span>Touching spots can become a larger creative or remain visibly separate. Combined layouts automatically adapt when territory changes.</span></div>
       <div class="rule"><b>Own all twelve. Own the page.</b><span>Buying all twelve gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
     </div>
     <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
-    <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">CONTACT</a></div>
+    <p class="rules-copy"><strong>Advertiser content is third-party content.</strong> Advertisers are responsible for their claims, offers, products, services, images, trademarks, and destination websites. TAKEOVER may remove reported or risky content but does not endorse it.</p>
+    <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
 </section>
 
@@ -120,6 +151,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="takeover-v2.js?v=3"></script>
+<script src="takeover-v2.js?v=4"></script>
 </body>
 </html>
