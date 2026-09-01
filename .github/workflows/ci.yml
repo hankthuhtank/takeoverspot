@@ -21,10 +21,14 @@ jobs:
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
           grep -q 'CENTER=\[6,7,10,11\]' takeover-v3.js
-          grep -q 'takeover-v3.js?v=2' boot.js
+          grep -q 'takeover-v3.js?v=3' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
           grep -q 'id=\"canvasCompany\"' takeover-v3.js
           grep -q 'id=\"canvasWebsite\"' takeover-v3.js
+          grep -q "takeover-admin-refund" takeover-v3.js
+          grep -q "takeover-launch-health" takeover-v3.js
+          grep -q 'id="refundModal"' index.html
+          grep -q 'id="adminHealth"' index.html
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
       - name: 16-cell board and canvas flows
@@ -64,7 +68,7 @@ jobs:
             if(!w.document.querySelector('#canvasWebsite').value.includes('example.com'))throw Error('Canvas website did not load');
             w.document.querySelector('#addText').click();
             if(w.document.querySelectorAll('#canvasStage .editor-layer').length<2)throw Error('Canvas layer add failed');
-            console.log('PASS V3');process.exit(0);
+            console.log('PASS FINAL V3');process.exit(0);
           },450);
           JS
           timeout 12s node v3.cjs
