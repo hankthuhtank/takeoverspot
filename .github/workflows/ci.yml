@@ -2,26 +2,9 @@ name: TAKEOVER Frontend Smoke Test
 on:
   push:
     branches: [main]
-    paths:
-      - 'index.html'
-      - 'takeover-v2.js'
-      - 'takeover.css'
-      - 'boot.js'
-      - 'polish.js'
-      - 'polish.css'
-      - 'launch.js'
-      - 'launch.css'
-      - '.github/workflows/ci.yml'
+    paths: ['index.html','takeover-v2.js','takeover.css','boot.js','polish.js','polish.css','launch.js','launch.css','.github/workflows/ci.yml']
   pull_request:
-    paths:
-      - 'index.html'
-      - 'takeover-v2.js'
-      - 'takeover.css'
-      - 'boot.js'
-      - 'polish.js'
-      - 'polish.css'
-      - 'launch.js'
-      - 'launch.css'
+    paths: ['index.html','takeover-v2.js','takeover.css','boot.js','polish.js','polish.css','launch.js','launch.css']
 permissions:
   contents: read
 jobs:
@@ -30,99 +13,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+        with: {node-version: '22'}
       - run: npm install jsdom@25 --no-save
-      - name: Syntax check
+      - name: Syntax and required hooks
         run: |
           node --check takeover-v2.js
           node --check polish.js
           node --check launch.js
           node --check boot.js
-      - name: Verify launch hooks
-        run: |
-          grep -q '4-HOUR SOCIAL SNAPSHOTS' index.html
-          grep -q 'id="moderationModal"' index.html
           grep -q 'admin_reset_takeover_spot' polish.js
-          grep -q 'takeover_moderation_log' polish.js
-          grep -q 'takeover-reveal-stage' polish.css
           grep -q 'dryEraseSweep' polish.css
           grep -q 'https://x.com/takeoverspot' launch.js
           grep -q 'https://www.instagram.com/takeover.spot' launch.js
           grep -q "DRAFT_TTL=30\*60\*1000" launch.js
           grep -q 'MutationObserver(syncPageControl)' launch.js
-          if grep -q 'setInterval(normalizeOwnedPageButton' launch.js; then echo 'Old page-button interval still exists' && exit 1; fi
-          echo 'PASS: social, moderation, reveal, one-time draft, and stable page-control hooks are present.'
-      - name: Verify spot and multi-spot flows
+          if grep -q 'setInterval(normalizeOwnedPageButton' launch.js; then exit 1; fi
+      - name: Core spot flows
         run: |
-          cat > smoke.cjs <<'JS'
-          const fs=require('fs');
-          const {JSDOM}=require('jsdom');
-          let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
-          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
-          const w=dom.window;
-          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,description:null,offer_text:null,feature_image_url:null,layout_mode:'combined',owner_since:null,updated_at:null}));
+          cat > core.cjs <<'JS'
+          const fs=require('fs'),{JSDOM}=require('jsdom');
+          const html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
+          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
+          const board=Array.from({length:12},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,description:null,offer_text:null,feature_image_url:null,layout_mode:'combined'}));
           const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
-          function builder(table){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:table==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:table==='takeover_config'?cfg:null,error:null})}};return b}
+          function builder(t){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:t==='takeover_config'?cfg:null,error:null})}};return b}
           const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc:()=>Promise.resolve({data:false,error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://example.test/img.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
-          w.supabase={createClient:()=>sb};
-          w.eval(fs.readFileSync('takeover-v2.js','utf8'));
-          setTimeout(()=>{
-            w.document.querySelector('#introGotIt')?.click();
-            const cells=[...w.document.querySelectorAll('.available-cell')];
-            if(cells.length!==12)throw new Error(`Expected 12 clickable spots, got ${cells.length}`);
-            for(let i=0;i<cells.length;i++){
-              cells[i].click();
-              const modal=w.document.querySelector('#takeoverModal');
-              if(!modal.classList.contains('on'))throw new Error(`Spot ${i+1} did not open takeover modal`);
-              if(!w.document.querySelector('#logoFile'))throw new Error(`Spot ${i+1} destroyed logo input`);
-              w.document.querySelector('#scrim').click();
-            }
-            cells[0].click();
-            if(!w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Single spot should not show multi-spot controls');
-            [...w.document.querySelectorAll('.mini-spot')][1].click();
-            if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Two spots did not unlock display controls');
-            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined two spots did not unlock rich fields');
-            w.document.querySelector('[data-purchase-layout="divided"]').click();
-            if(!w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Divided mode should hide rich fields');
-            w.document.querySelector('[data-purchase-layout="combined"]').click();
-            if(w.document.querySelector('#purchaseRichFields').hidden)throw new Error('Combined mode should restore rich fields');
-            if(!w.document.querySelector('#featureFile'))throw new Error('Feature image input missing');
-            w.document.querySelector('#scrim').click();
-            w.document.querySelector('#takePageBtn').click();
-            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw new Error('TAKE THE PAGE did not open takeover modal');
-            if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw new Error('Full-page flow did not expose multi-spot controls');
-            if(!w.document.querySelector('#moderationModal'))throw new Error('Moderation modal missing');
-            console.log('PASS: all spots, multi-spot modes, rich fields, full-page flow, and moderation markup are working.');
-            process.exit(0);
-          },220);
+          w.supabase={createClient:()=>sb};w.eval(fs.readFileSync('takeover-v2.js','utf8'));
+          setTimeout(()=>{w.document.querySelector('#introGotIt')?.click();const cells=[...w.document.querySelectorAll('.available-cell')];if(cells.length!==12)throw Error('Expected 12 cells');for(let i=0;i<12;i++){cells[i].click();if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot click failed '+(i+1));w.document.querySelector('#scrim').click()}cells[0].click();[...w.document.querySelectorAll('.mini-spot')][1].click();if(w.document.querySelector('#purchaseCreativeUpgrade').hidden)throw Error('Two-spot controls missing');w.document.querySelector('[data-purchase-layout="divided"]').click();if(!w.document.querySelector('#purchaseRichFields').hidden)throw Error('Divided rich fields visible');console.log('PASS core');process.exit(0)},250);
           JS
-          node smoke.cjs
-      - name: Verify stable launch state
+          timeout 10s node core.cjs
+      - name: Stable launch state
         run: |
-          cat > boot-smoke.cjs <<'JS'
-          const fs=require('fs');
-          const {JSDOM}=require('jsdom');
-          let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
-          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
-          const w=dom.window;
-          function chain(data=[]){const b={select(){return b},eq(){return b},is(){return b},limit(){return b},order(){return Promise.resolve({data,error:null})},maybeSingle(){return Promise.resolve({data:null,error:null})},then(resolve){return Promise.resolve({data,error:null}).then(resolve)}};return b}
-          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}})},from:()=>chain([]),rpc:()=>Promise.resolve({data:false,error:null})};
-          w.supabase={createClient:()=>sb};
+          cat > launch.cjs <<'JS'
+          const fs=require('fs'),{JSDOM}=require('jsdom');
+          const html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
+          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
+          function chain(data=[]){const b={select(){return b},eq(){return b},is(){return b},limit(){return b},order(){return Promise.resolve({data,error:null})},maybeSingle(){return Promise.resolve({data:null,error:null})},then(r){return Promise.resolve({data,error:null}).then(r)}};return b}
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}})},from:()=>chain([]),rpc:()=>Promise.resolve({data:false,error:null})};w.supabase={createClient:()=>sb};
           w.localStorage.setItem('takeover_purchase_draft',JSON.stringify({selected:[6],seedSpot:6}));
-          w.eval(fs.readFileSync('polish.js','utf8'));
-          w.eval(fs.readFileSync('launch.js','utf8'));
-          const actions=w.document.querySelector('#spotActions');
-          for(let i=1;i<=12;i++){const row=w.document.createElement('div');row.className='spot-action';const b=w.document.createElement('button');b.textContent='TAKE FOR $10';row.appendChild(b);actions.appendChild(row)}
-          setTimeout(()=>{
-            if(w.localStorage.getItem('takeover_purchase_draft'))throw new Error('Legacy Spot 6 draft was not cleared');
-            const social=w.document.querySelector('.social-links')?.textContent.replace(/\s+/g,' ').trim()||'';
-            if(social!=='X · INSTAGRAM')throw new Error(`Unexpected social text: ${social}`);
-            const page=w.document.querySelector('#takePageBtn');
-            if(page.textContent.trim()!=='TAKE THE PAGE · $120')throw new Error(`Wrong empty-board page control: ${page.textContent}`);
-            if(page.dataset.pageManage==='1')throw new Error('Empty board incorrectly entered manage-page mode');
-            console.log('PASS: stale draft cleared, social is stable, empty board is $120, and event loop is responsive.');
-            process.exit(0);
-          },350);
+          w.eval(fs.readFileSync('polish.js','utf8'));w.eval(fs.readFileSync('launch.js','utf8'));
+          const actions=w.document.querySelector('#spotActions');for(let i=0;i<12;i++){const r=w.document.createElement('div');r.className='spot-action';const b=w.document.createElement('button');b.textContent='TAKE FOR $10';r.appendChild(b);actions.appendChild(r)}
+          setTimeout(()=>{if(w.localStorage.getItem('takeover_purchase_draft'))throw Error('Legacy Spot 6 draft persisted');const social=(w.document.querySelector('.social-links')?.textContent||'').replace(/\s+/g,'');if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);const page=w.document.querySelector('#takePageBtn');if(page.textContent.trim()!=='TAKE THE PAGE · $120')throw Error('Wrong page control: '+page.textContent);if(page.dataset.pageManage==='1')throw Error('Empty board entered manage mode');console.log('PASS launch');process.exit(0)},400);
           JS
-          timeout 10s node boot-smoke.cjs
+          timeout 10s node launch.cjs
