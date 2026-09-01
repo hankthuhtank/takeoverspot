@@ -70,5 +70,4 @@ async function renderAllAdminSpots(){
   }).join('');
 }
 document.addEventListener('click',e=>{if(e.target.closest?.('#adminBtn'))setTimeout(renderAllAdminSpots,180)},true);
-const adminBoard=$('#adminBoard');if(adminBoard)new MutationObserver(()=>{if($('#adminPanel')?.classList.contains('on'))setTimeout(renderAllAdminSpots,80)}).observe(adminBoard,{childList:true});
 })();
