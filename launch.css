@@ -1,0 +1,27 @@
+/* TAKEOVER launch layout + mobile hardening */
+
+/* Use the top strip horizontally instead of stacking the identity card. */
+.chrome{align-items:center;gap:10px}.identity{display:flex;align-items:center;gap:16px;flex:1 1 auto;min-width:0;max-width:none;padding:12px 16px}.identity>b{flex:0 0 auto}.identity>span{display:block;margin:0;padding-left:16px;border-left:1px solid #deded7;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.social-pulse{flex:0 0 auto;margin:0 0 0 auto;padding:0 0 0 16px;border-top:0;border-left:1px solid #deded7;white-space:nowrap}.controls{flex:0 0 auto}
+
+/* Keep the purchase flow readable and make legal consent impossible to miss. */
+.terms-consent{margin-top:14px;padding:13px 14px;border:1px solid #d8d8d1;border-radius:12px;background:#fff}.terms-consent label{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;align-items:start;color:#54544e;font-size:12px;line-height:1.55;cursor:pointer}.terms-consent input{width:18px;height:18px;margin:1px 0 0;accent-color:#111}.terms-consent a{color:#111;font-weight:800;text-underline-offset:2px}.terms-consent strong{color:#111}.terms-consent.attention{border-color:#111;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
+
+/* Slightly improve board copy without turning the minimal board into a dashboard. */
+.available-cell span{font-size:11px}.available-cell b{font-size:16px}.territory .site{font-size:11px}.take-pill{font-size:11px;min-height:40px;min-width:98px}.site-legal a{font-size:10px;padding:6px 8px}
+
+/* Mobile: preserve the board, but make every control touchable and readable. */
+@media(max-width:720px){
+  html,body{width:100%;height:100%;height:100dvh;overscroll-behavior:none}.board{height:100dvh}
+  .chrome{top:max(7px,env(safe-area-inset-top));left:7px;right:7px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:6px}
+  .identity{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0;max-width:210px;padding:9px 10px;border-radius:12px}.identity>b{font-size:14px}.identity>span{display:none}.social-pulse{width:100%;margin:2px 0 0;padding:5px 0 0;border-left:0;border-top:1px solid #deded7;gap:5px}.social-pulse strong,.social-pulse em{font-size:8px}.social-pulse i{width:5px;height:5px;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+  .controls{max-width:calc(100vw - 225px);display:flex;justify-content:flex-end;align-items:flex-start;gap:4px;flex-wrap:wrap}.chrome-btn{min-height:36px;padding:9px 10px;font-size:8px;line-height:1}.chrome-btn.primary{padding-left:11px;padding-right:11px}
+  #spotActions .spot-action:nth-child(-n+4) .available-cell{padding-top:46px}.available-cell{gap:6px}.available-cell span{font-size:9px}.available-cell b{font-size:12px}.take-pill{font-size:9px;min-height:38px;min-width:80px;right:5px;bottom:5px;padding:8px}.territory .site{font-size:8px}
+  .site-legal{left:7px;right:7px;bottom:max(7px,env(safe-area-inset-bottom));max-width:none;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:1px;scrollbar-width:none}.site-legal::-webkit-scrollbar{display:none}.site-legal a{flex:0 0 auto;font-size:8px;padding:6px 7px}
+  .modal{left:7px;right:7px;top:max(7px,env(safe-area-inset-top));bottom:max(7px,env(safe-area-inset-bottom));width:auto;max-height:none;transform:none!important;border-radius:15px}.drawer{right:7px;left:7px;top:max(7px,env(safe-area-inset-top));bottom:max(7px,env(safe-area-inset-bottom));width:auto;transform:none!important;border-radius:15px}.panel-inner{padding:19px 18px 26px}.panel-head h2{font-size:28px}.close{width:40px;height:40px}.field input,.field select{height:50px;font-size:16px}.field textarea{font-size:16px}.action,.secondary{min-height:48px}.mini-grid{gap:6px}.mini-spot{height:52px;font-size:10px}.mini-spot b{font-size:12px}.bid-row{grid-template-columns:minmax(0,1fr) 92px;gap:10px}.bid-row input{width:92px;height:44px;font-size:16px}.hint{font-size:12px}.rules-copy{font-size:14px}.rule b{font-size:14px}.rule span{font-size:12px}.terms-consent label{font-size:12px}
+}
+
+@media(max-width:480px){
+  .identity{max-width:168px}.social-pulse em{display:none}.social-pulse strong{font-size:7px}.controls{max-width:calc(100vw - 182px)}.chrome-btn{font-size:7px;padding:8px}.panel-inner{padding:17px 15px 24px}.panel-head h2{font-size:25px}.mini-spot{height:49px}.summary b{font-size:30px}
+}
+
+@media(max-width:390px){.identity{max-width:150px}.controls{max-width:calc(100vw - 164px)}.social-pulse strong{letter-spacing:0}.chrome-btn{padding:8px 7px}.site-legal a{font-size:7px}}
