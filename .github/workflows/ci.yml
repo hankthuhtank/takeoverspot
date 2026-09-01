@@ -9,6 +9,8 @@ on:
       - 'boot.js'
       - 'polish.js'
       - 'polish.css'
+      - 'launch.js'
+      - 'launch.css'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
@@ -18,6 +20,8 @@ on:
       - 'boot.js'
       - 'polish.js'
       - 'polish.css'
+      - 'launch.js'
+      - 'launch.css'
 permissions:
   contents: read
 jobs:
@@ -33,6 +37,7 @@ jobs:
         run: |
           node --check takeover-v2.js
           node --check polish.js
+          node --check launch.js
           node --check boot.js
       - name: Verify polish hooks
         run: |
@@ -44,7 +49,9 @@ jobs:
           grep -q 'takeover-reveal-stage' polish.css
           grep -q 'dryEraseSweep' polish.css
           grep -q 'width:min(860px' polish.css
-          echo 'PASS: social label, moderation reset, legibility layer, and dry-erase hooks are present.'
+          grep -q 'https://x.com/takeoverspot' launch.js
+          grep -q 'https://www.instagram.com/takeover.spot' launch.js
+          echo 'PASS: social links, moderation reset, legibility layer, and dry-erase hooks are present.'
       - name: Verify spot and multi-spot flows
         run: |
           cat > smoke.cjs <<'JS'
@@ -90,3 +97,24 @@ jobs:
           },220);
           JS
           node smoke.cjs
+      - name: Verify full boot stays responsive
+        run: |
+          cat > boot-smoke.cjs <<'JS'
+          const fs=require('fs');
+          const {JSDOM}=require('jsdom');
+          let html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
+          const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true});
+          const w=dom.window;
+          function chain(data=[]){const b={select(){return b},eq(){return b},is(){return b},limit(){return b},order(){return Promise.resolve({data,error:null})},maybeSingle(){return Promise.resolve({data:null,error:null})},then(resolve){return Promise.resolve({data,error:null}).then(resolve)}};return b}
+          const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}})},from:()=>chain([]),rpc:()=>Promise.resolve({data:false,error:null})};
+          w.supabase={createClient:()=>sb};
+          w.eval(fs.readFileSync('polish.js','utf8'));
+          w.eval(fs.readFileSync('launch.js','utf8'));
+          setTimeout(()=>{
+            const social=w.document.querySelector('.social-links')?.textContent||'';
+            if(!social.includes('X')||!social.includes('INSTAGRAM'))throw new Error('Social links did not initialize');
+            console.log('PASS: polish + launch layers initialized and event loop remained responsive.');
+            process.exit(0);
+          },300);
+          JS
+          timeout 10s node boot-smoke.cjs
