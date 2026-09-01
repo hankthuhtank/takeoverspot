@@ -4,6 +4,7 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const cash=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(n||0));
 function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3000)}
 
+/* Purchase assent — checkout button exists in the static page, so no DOM observer is needed. */
 function installTermsConsent(){
   if($('#termsConsent')||!$('#checkoutBtn'))return;
   const box=document.createElement('div');
@@ -13,7 +14,6 @@ function installTermsConsent(){
   $('#checkoutBtn').before(box);
 }
 installTermsConsent();
-new MutationObserver(installTermsConsent).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('click',e=>{
   const checkout=e.target.closest?.('#checkoutBtn');
   if(!checkout)return;
@@ -24,32 +24,34 @@ document.addEventListener('click',e=>{
   toast('Agree to the purchase terms to continue');
 },true);
 
-/* Public social links — no private owner identity is exposed. */
+/* Public social links — compact labels only; usernames remain off the page. */
 function installSocialLinks(){
-  const pulse=$('.social-pulse');if(!pulse||pulse.dataset.linked==='1')return;
-  pulse.dataset.linked='1';
-  pulse.innerHTML='<i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><span class="social-links"><a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X @takeoverspot</a><a href="https://www.instagram.com/takeover.spot/" target="_blank" rel="noopener">IG @takeover.spot</a></span>';
+  const pulse=$('.social-pulse');if(!pulse)return;
+  pulse.innerHTML='<i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><span class="social-links"><a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X</a><span>·</span><a href="https://www.instagram.com/takeover.spot" target="_blank" rel="noopener">INSTAGRAM</a></span>';
 }
 installSocialLinks();
 
-/* If the signed-in advertiser owns all 12 spots, the top-right status opens My Spots. */
+/* Main app rewrites the page button as board state changes. Check it safely without observing our own mutations. */
 function normalizeOwnedPageButton(){
   const b=$('#takePageBtn');if(!b)return;
   const text=(b.textContent||'').trim();
   const owned=/^YOU OWN THE PAGE(?:\b| ·)/.test(text)||/^PAGE PROTECTED ·/.test(text);
-  b.classList.toggle('owned-page-control',owned);
   if(owned){
-    b.disabled=false;
-    b.title='Open My Spots';
+    if(!b.classList.contains('owned-page-control'))b.classList.add('owned-page-control');
+    if(b.disabled)b.disabled=false;
+    if(b.title!=='Open My Spots')b.title='Open My Spots';
     if(text==='YOU OWN THE PAGE')b.textContent='YOU OWN THE PAGE · MANAGE';
-  }else if(!/^TAKE THE PAGE/.test(text)){
-    b.title='';
+  }else{
+    if(b.classList.contains('owned-page-control'))b.classList.remove('owned-page-control');
+    if(b.title)b.title='';
   }
 }
-const pageBtn=$('#takePageBtn');
-if(pageBtn){new MutationObserver(normalizeOwnedPageButton).observe(pageBtn,{attributes:true,childList:true,subtree:true});normalizeOwnedPageButton()}
+normalizeOwnedPageButton();
+setInterval(normalizeOwnedPageButton,1000);
 document.addEventListener('click',e=>{
-  const b=e.target.closest?.('#takePageBtn.owned-page-control');if(!b)return;
+  const b=e.target.closest?.('#takePageBtn');if(!b)return;
+  const text=(b.textContent||'').trim();
+  if(!(/^YOU OWN THE PAGE/.test(text)||/^PAGE PROTECTED ·/.test(text)))return;
   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
   $('#accountBtn')?.click();
 },true);
