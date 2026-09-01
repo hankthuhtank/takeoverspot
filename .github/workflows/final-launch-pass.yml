@@ -1,0 +1,92 @@
+name: One-time TAKEOVER final launch pass
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/final-launch-pass.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply final launch polish
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # INDEX: admin health, refund modal, copyright links.
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('<a href="content-policy.html">AD POLICY</a><a href="contact.html">REPORT / CONTACT</a>','<a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a>')
+          s=s.replace('<a href="content-policy.html" target="_blank">AD POLICY</a><a href="contact.html" target="_blank">REPORT / CONTACT</a>','<a href="content-policy.html" target="_blank">AD POLICY</a><a href="copyright.html" target="_blank">COPYRIGHT</a><a href="contact.html" target="_blank">REPORT / CONTACT</a>')
+          old='<button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>\n    <div class="selector-title"><div><b>LIVE BOARD</b>'
+          new='<button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>\n    <div class="selector-title"><div><b>SYSTEM HEALTH</b><small>Owner-only launch checks. Green means no action needed.</small></div></div>\n    <div id="adminHealth"><div class="empty">Checking…</div></div>\n    <div class="selector-title"><div><b>LIVE BOARD</b>'
+          if old not in s: raise SystemExit('admin health insertion point missing')
+          s=s.replace(old,new,1)
+          s=s.replace('<div class="selector-title"><div><b>RECENT PURCHASES</b><small>Latest Stripe takeover attempts.</small></div></div>','<div class="selector-title"><div><b>RECENT PURCHASES</b><small>Owner refund controls appear on completed payments.</small></div></div>',1)
+          refund_modal='''\n<section class="panel modal moderation-modal" id="refundModal">\n  <div class="panel-inner">\n    <div class="panel-head"><div><span>OWNER REFUND</span><h2 id="refundTitle">Refund a purchase.</h2></div><button class="close" data-close>×</button></div>\n    <div class="moderation-policy"><b>MONEY MOVES THROUGH STRIPE.</b><p>Issue a full or partial refund here. Refunding money does not remove an ad unless you explicitly choose to reset territory too.</p></div>\n    <div class="field"><label>REFUND AMOUNT</label><input id="refundAmount" type="number" min="0.01" step="0.01"></div>\n    <div class="field"><label>REASON</label><select id="refundReason"><option value="">Choose a reason</option><option value="customer_request">Customer request</option><option value="duplicate">Duplicate charge</option><option value="fraud_suspected">Fraud suspected</option><option value="service_issue">TAKEOVER service issue</option><option value="goodwill">Goodwill / courtesy</option><option value="other">Other</option></select></div>\n    <div class="field"><label>PRIVATE NOTE · OPTIONAL</label><textarea id="refundNote" maxlength="500" placeholder="Internal note. Required if you choose Other."></textarea></div>\n    <label class="toggle"><input id="refundResetTerritory" type="checkbox"> Also return any spots still tied to this exact purchase to AVAILABLE</label>\n    <p class="hint" id="refundHint">Only spots still owned from this exact payment can be reset. Later purchases are never touched.</p>\n    <button class="action danger" id="confirmRefund">ISSUE REFUND</button>\n    <button class="secondary" id="refundCancel">CANCEL</button>\n  </div>\n</section>\n'''
+          marker='\n<div class="toast" id="toast"></div>'
+          if marker not in s: raise SystemExit('refund modal insertion point missing')
+          s=s.replace(marker,refund_modal+marker,1)
+          p.write_text(s)
+
+          # APP: refund/admin health logic.
+          p=Path('takeover-v3.js'); s=p.read_text()
+          s=s.replace("let editorCanvas=null,editorCreativeId=null,editorContext='purchase',editorSelected=null,editorCompany='',editorWebsite='',moderationSpot=null,lastImpressionKey='';","let editorCanvas=null,editorCreativeId=null,editorContext='purchase',editorSelected=null,editorCompany='',editorWebsite='',moderationSpot=null,refundAttempt=null,lastImpressionKey='';",1)
+          start=s.index('async function renderAdmin(){')
+          end=s.index("\nif($('#saveConfig'))",start)
+          new_admin=r'''async function renderAdmin(){$('#startingPrice').value=config.starting_price;$('#minIncrement').value=config.min_increment;$('#purchasesEnabled').checked=!!config.purchases_enabled;$('#adminBoard').innerHTML=Array.from({length:TOTAL},(_,i)=>spot(i+1)).map(s=>`<div class="admin-row"><span>${String(s.spot_number).padStart(2,'0')}</span><div><b>${esc(s.company_name||'AVAILABLE')} · ${s.current_price?cash(s.current_price):cash(config.starting_price)}</b><small>${s.website?esc(host(s.website)):'No owner'}</small></div><button class="tiny danger" data-reset="${s.spot_number}" ${s.owner_key?'':'disabled'}>RESET</button></div>`).join('');$$('[data-reset]').forEach(b=>b.onclick=()=>openReset(Number(b.dataset.reset)));const [{data:attempts},{data:refunds}]=await Promise.all([sb.from('takeover_attempts').select('id,kind,status,company_name,total_amount,created_at,paid_at,stripe_payment_intent_id').order('created_at',{ascending:false}).limit(30),sb.from('takeover_refunds').select('attempt_id,amount,status').eq('status','succeeded').order('created_at',{ascending:false}).limit(200)]);const refunded={};(refunds||[]).forEach(r=>refunded[r.attempt_id]=(refunded[r.attempt_id]||0)+Number(r.amount||0));$('#adminAttempts').innerHTML=(attempts||[]).map(a=>{const total=Number(a.total_amount||0),back=Number(refunded[a.id]||0),remaining=Math.max(0,total-back),can=!!a.stripe_payment_intent_id&&a.status==='won'&&remaining>0;return `<div class="admin-row"><span>•</span><div><b>${esc(a.company_name)} · ${cash(total)}</b><small>${a.kind} · ${a.status}${back?` · refunded ${cash(back)}`:''} · ${new Date(a.created_at).toLocaleString()}</small></div>${can?`<button class="tiny danger" data-refund="${a.id}" data-company="${esc(a.company_name)}" data-kind="${a.kind}">REFUND</button>`:''}</div>`}).join('')||'<div class="empty">No purchases yet.</div>';$$('[data-refund]').forEach(b=>b.onclick=()=>openRefund(b.dataset.refund,b.dataset.company,b.dataset.kind));await Promise.all([renderModerationHistory(),renderHealth()])}'''
+          s=s[:start]+new_admin+s[end:]
+          marker="async function renderModerationHistory(){"
+          idx=s.index(marker)
+          next_marker="\n\nfunction saveRevealDraft",idx
+          insert_at=s.index(next_marker,idx)
+          refund_logic=r'''
+async function renderHealth(){const box=$('#adminHealth');if(!box)return;box.innerHTML='<div class="empty">Checking…</div>';try{const {data,error}=await sb.functions.invoke('takeover-launch-health',{body:{}});if(error||data?.error)throw new Error(data?.error||error?.message||'Health check failed');const c=data.checks||{},labels=[['stripe_secret','STRIPE PAYMENTS'],['stripe_webhook_secret','STRIPE WEBHOOK'],['email','TRANSACTIONAL EMAIL'],['single_admin','SINGLE ADMIN'],['board_16','16-CELL BOARD'],['no_failed_refunds','REFUND QUEUE'],['no_stuck_attempts','CHECKOUT QUEUE'],['no_failed_emails','EMAIL QUEUE']];box.innerHTML=labels.map(([k,l])=>`<div class="admin-row"><span>${c[k]?'✓':'!'}</span><div><b>${l}</b><small>${c[k]?'READY':'NEEDS ATTENTION'}</small></div></div>`).join('')}catch(e){box.innerHTML=`<div class="empty">Health check failed: ${esc(e.message)}</div>`}}
+async function openRefund(id,company,kind){refundAttempt={id,kind,company};const {data,error}=await sb.rpc('admin_refund_summary',{p_attempt_id:id});if(error)return toast(error.message);const row=Array.isArray(data)?data[0]:data;if(!row||Number(row.remaining_refundable)<=0)return toast('Nothing remains to refund');$('#refundTitle').textContent=`Refund ${company||'purchase'}?`;$('#refundAmount').value=Number(row.remaining_refundable).toFixed(2);$('#refundAmount').max=Number(row.remaining_refundable).toFixed(2);$('#refundReason').value='';$('#refundNote').value='';$('#refundResetTerritory').checked=false;$('#refundResetTerritory').disabled=kind!=='takeover';openPanel('#refundModal')}
+if($('#confirmRefund'))$('#confirmRefund').onclick=async()=>{if(!refundAttempt)return;const amount=Math.round(Number($('#refundAmount').value||0)*100),reason=$('#refundReason').value,note=$('#refundNote').value.trim(),reset=$('#refundResetTerritory').checked;if(amount<1)return toast('Enter a refund amount');if(!reason)return toast('Choose a refund reason');if(reason==='other'&&!note)return toast('Add a short note for Other');const b=$('#confirmRefund'),old=b.textContent;b.disabled=true;b.textContent='REFUNDING…';const {data,error}=await sb.functions.invoke('takeover-admin-refund',{body:{attempt_id:refundAttempt.id,amount_cents:amount,reason,note:note||null,reset_territory:reset}});b.disabled=false;b.textContent=old;if(error||data?.error)return toast(data?.error||error?.message||'Refund failed');toast(`Refunded ${cash(data.amount)}`);refundAttempt=null;closePanels();await refreshBoard();await renderAdmin();openPanel('#adminPanel')};if($('#refundCancel'))$('#refundCancel').onclick=()=>{refundAttempt=null;closePanels()};
+'''
+          s=s[:insert_at]+refund_logic+s[insert_at:]
+          p.write_text(s)
+
+          # CONTACT: rights-report topic and link.
+          p=Path('contact.html'); s=p.read_text()
+          s=s.replace('<a href="content-policy.html">Report an ad</a>','<a href="content-policy.html">Report an ad</a><a href="copyright.html">Copyright / rights</a>',1)
+          s=s.replace('<option>Report an advertisement</option>','<option>Report an advertisement</option><option>Copyright / trademark / rights report</option>',1)
+          p.write_text(s)
+
+          # CONTENT POLICY: replace obsolete compact/rich template language with SPOT CANVAS.
+          p=Path('content-policy.html'); s=p.read_text()
+          old='<p>A single spot uses the compact presentation: company identity, optional logo, and destination website. When an advertiser controls two or more touching spots and selects <strong>Combined</strong>, TAKEOVER may also display a short description, one offer or pricing line, and one feature image. Advertisers may instead select <strong>Divided</strong> to preserve individual cell boundaries.</p><p>Combined creative automatically adapts to the territory actually owned. If cells are lost, TAKEOVER may resize, rearrange, crop, simplify, hide rich fields, or revert the remaining cell to the compact presentation. This is an expected part of the product, not an alteration requiring advertiser approval.</p>'
+          new='<p>Every owned territory can be designed with <strong>SPOT CANVAS</strong>. Advertisers may use safe structured controls for backgrounds, colors, gradients, uploaded images, logos, text, buttons, fonts, sizing, positioning, destination links, and Combined or Divided display. Separate territories may use separate designs.</p><p>Creative automatically adapts to the territory actually owned. If cells are lost, TAKEOVER may resize, partition, rearrange, crop, simplify, or otherwise adapt the creative so it occupies only the cells still controlled by that advertiser. This is an expected part of the product, not an alteration requiring advertiser approval.</p>'
+          if old not in s: raise SystemExit('content policy old format text missing')
+          s=s.replace(old,new,1); p.write_text(s)
+
+          # PAYMENTS: document owner manual/partial refund behavior.
+          p=Path('payments.html'); s=p.read_text()
+          old='<p>Refunds may also be issued for duplicate charges, material technical errors, transactions TAKEOVER cannot fulfill because of its own error, or other circumstances where a refund is required by law or approved by TAKEOVER.</p>'
+          new='<p>Refunds may also be issued for duplicate charges, material technical errors, transactions TAKEOVER cannot fulfill because of its own error, customer-service resolutions, goodwill, fraud concerns, or other circumstances where a refund is required by law or approved by TAKEOVER. TAKEOVER may issue a full or partial refund through Stripe.</p><p>A refund and a moderation reset are separate actions. Unless TAKEOVER expressly resets the associated territory, refunding some or all of a payment does not by itself transfer or remove the advertiser\'s currently owned cells. When a refund is paired with a territory reset, only cells still tied to that exact purchase are eligible to be returned to available.</p>'
+          if old not in s: raise SystemExit('payments refund paragraph missing')
+          s=s.replace(old,new,1); p.write_text(s)
+
+          # Add Copyright footer link to legal pages where missing.
+          for name in ['terms.html','privacy.html','auction-rules.html','payments.html','content-policy.html','contact.html']:
+              q=Path(name); t=q.read_text()
+              if 'href="copyright.html"' not in t:
+                  t=t.replace('<a href="content-policy.html">Ad Policy</a><a href="contact.html">Contact</a>','<a href="content-policy.html">Ad Policy</a><a href="copyright.html">Copyright</a><a href="contact.html">Contact</a>')
+              q.write_text(t)
+
+          # Cache bust runtime.
+          p=Path('boot.js'); s=p.read_text().replace('takeover-v3.js?v=2','takeover-v3.js?v=3'); p.write_text(s)
+          PY
+          node --check takeover-v3.js
+          grep -q "takeover-admin-refund" takeover-v3.js
+          grep -q "takeover-launch-health" takeover-v3.js
+          grep -q 'id="refundModal"' index.html
+          grep -q 'id="adminHealth"' index.html
+          grep -q 'SPOT CANVAS' content-policy.html
+          git config user.name "TAKEOVER Build"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html takeover-v3.js boot.js contact.html content-policy.html payments.html terms.html privacy.html auction-rules.html
+          git commit -m "Finalize TAKEOVER admin refunds and launch readiness"
+          git push
