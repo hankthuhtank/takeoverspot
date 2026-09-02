@@ -20,21 +20,24 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V19 architecture
+      - name: V20 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=19' boot.js
-          grep -q 'takeover-v3.css?v=18' boot.js
-          grep -q 'boot.js?v=15' index.html
+          grep -q 'takeover-v3.js?v=20' boot.js
+          grep -q 'takeover-v3.css?v=20' boot.js
+          grep -q 'boot.js?v=16' index.html
           grep -q 'frameCells' takeover-v3.js
           grep -q 'startLayerTouch' takeover-v3.js
-          grep -q 'shapeStyle' takeover-v3.js
           grep -q 'Particle Field' takeover-v3.js
           grep -q "case'gravity'" takeover-v3.js
           grep -q "case'liquid'" takeover-v3.js
           grep -q "case'kinetic'" takeover-v3.js
           grep -q "case'stardust'" takeover-v3.js
-          grep -q 'takeoverParticle' takeover-v3.css
+          grep -q "case'dreamscape'" takeover-v3.js
+          grep -q "case'stickerbomb'" takeover-v3.js
+          grep -q "case'laser'" takeover-v3.js
+          grep -q "case'cutpaper'" takeover-v3.js
+          grep -q "case'afterdark'" takeover-v3.js
           grep -q 'motion-morph' takeover-v3.css
           grep -q 'motion-orbit' takeover-v3.css
       - name: Pseudonymous optional-link contract
@@ -46,12 +49,37 @@ jobs:
           if(s.includes("if(!website)return toast('Enter your website')")) throw Error('website became mandatory in checkout again');
           if(s.includes("if(!editorWebsite)return toast('Enter a website')")) throw Error('website became mandatory in canvas again');
           if(!s.includes("editorWebsite=normalizeWebsite($('#companyWebsite').value||'')")) throw Error('canvas still fabricates a website');
-          console.log('PASS V19 OPTIONAL LINK');
+          if(!s.includes('anonymous to visitors')) throw Error('private/pseudonymous checkout disclosure missing');
+          console.log('PASS V20 OPTIONAL LINK / IDENTITY');
           JS
           grep -q 'NAME / BRAND' index.html
           grep -q 'LINK · OPTIONAL' index.html
           grep -q 'Explicit nudity, pornography, or graphic sexual content' content-policy.html
           grep -qi 'pseudonym' terms.html
+      - name: Logo removal regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes('REMOVE LOGO')) throw Error('remove-logo control missing');
+          if(!s.includes('logoExplicitlyRemoved=true')) throw Error('logo removal state missing');
+          if(!s.includes("if(logoExplicitlyRemoved)return null")) throw Error('removed logo can leak back into checkout');
+          if(!s.includes("clear_takeover_profile_logo")) throw Error('default profile logo is not cleared');
+          console.log('PASS V20 LOGO REMOVAL');
+          JS
+      - name: Private design library regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          for(const token of ['takeover_saved_designs','SAVE TO MY LIBRARY','loadSavedDesigns','renderSavedDesignLibrary','takeover_saved_design_next']){
+            if(!s.includes(token)) throw Error('saved design contract missing: '+token);
+          }
+          if(!s.includes(".limit(40)")) throw Error('saved library cap no longer reflected in client');
+          console.log('PASS V20 DESIGN LIBRARY');
+          JS
+          grep -q 'SAVED DESIGNS' index.html
+          grep -qi 'saved-design library' privacy.html
       - name: Typography interaction regression
         run: |
           node - <<'JS'
