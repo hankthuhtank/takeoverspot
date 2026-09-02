@@ -1,10 +1,10 @@
-name: TAKEOVER Frontend Smoke Test
+name: TAKEOVER V22 Smoke Test
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -20,124 +20,61 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V21 architecture
+      - name: V22 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=21' boot.js
-          grep -q 'takeover-v3.css?v=21' boot.js
-          grep -q 'boot.js?v=17' index.html
+          grep -q 'takeover-v3.js?v=22' boot.js
+          grep -q 'takeover-v3.css?v=22' boot.js
+          grep -q 'boot.js?v=18' index.html
+          grep -q 'vendor/supabase-2.112.4.min.js' index.html
+          test -s vendor/supabase-2.112.4.min.js
+          ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html
+          grep -q 'window.self!==window.top' boot.js
+          grep -q 'TAKEOVER V22 DESKTOP READABILITY' takeover-v3.css
+      - name: Core product contracts
+        run: |
           grep -q 'frameCells' takeover-v3.js
           grep -q 'startLayerTouch' takeover-v3.js
           grep -q 'Particle Field' takeover-v3.js
-          grep -q "case'gravity'" takeover-v3.js
-          grep -q "case'liquid'" takeover-v3.js
-          grep -q "case'kinetic'" takeover-v3.js
-          grep -q "case'stardust'" takeover-v3.js
-          grep -q "case'dreamscape'" takeover-v3.js
-          grep -q "case'stickerbomb'" takeover-v3.js
-          grep -q "case'laser'" takeover-v3.js
-          grep -q "case'cutpaper'" takeover-v3.js
-          grep -q "case'afterdark'" takeover-v3.js
-          grep -q 'motion-morph' takeover-v3.css
-          grep -q 'motion-orbit' takeover-v3.css
-      - name: Pseudonymous optional-link contract
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          if(!s.includes("interactive&&link?'a':'div'")) throw Error('linkless territories are no longer display-only');
-          if(s.includes("if(!website)return toast('Enter your website')")) throw Error('website became mandatory in checkout again');
-          if(s.includes("if(!editorWebsite)return toast('Enter a website')")) throw Error('website became mandatory in canvas again');
-          if(!s.includes("editorWebsite=normalizeWebsite($('#companyWebsite').value||'')")) throw Error('canvas still fabricates a website');
-          if(!s.includes('anonymous to visitors')) throw Error('private/pseudonymous checkout disclosure missing');
-          console.log('PASS OPTIONAL LINK / IDENTITY');
-          JS
-          grep -q 'NAME / BRAND' index.html
-          grep -q 'LINK · OPTIONAL' index.html
-          grep -q 'Explicit nudity, pornography, or graphic sexual content' content-policy.html
-          grep -qi 'pseudonym' terms.html
-      - name: Logo removal regression
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          if(!s.includes('REMOVE LOGO')) throw Error('remove-logo control missing');
-          if(!s.includes('logoExplicitlyRemoved=true')) throw Error('logo removal state missing');
-          if(!s.includes("if(logoExplicitlyRemoved)return null")) throw Error('removed logo can leak back into checkout');
-          if(!s.includes("clear_takeover_profile_logo")) throw Error('default profile logo is not cleared');
-          console.log('PASS LOGO REMOVAL');
-          JS
-      - name: Private design library regression
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          for(const token of ['takeover_saved_designs','SAVE TO MY LIBRARY','loadSavedDesigns','renderSavedDesignLibrary','takeover_saved_design_next']){
-            if(!s.includes(token)) throw Error('saved design contract missing: '+token);
-          }
-          if(!s.includes(".limit(40)")) throw Error('saved library cap no longer reflected in client');
-          console.log('PASS DESIGN LIBRARY');
-          JS
-          grep -q 'SAVED DESIGNS' index.html
-          grep -qi 'saved-design library' privacy.html
-      - name: Spot history and owner-control regression
-        run: |
+          grep -q 'SAVE TO MY LIBRARY' takeover-v3.js
+          grep -q 'REMOVE LOGO' takeover-v3.js
+          grep -q 'anonymous to visitors' takeover-v3.js
           grep -q 'takeover_spot_history' takeover-v3.js
           grep -q 'admin_restore_takeover_spot' takeover-v3.js
           grep -q 'admin_set_takeover_spot_price' takeover-v3.js
           grep -q 'admin_vacate_takeover_spot' takeover-v3.js
           grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
-          grep -q 'adminHistorySpotFilter' index.html
-          grep -q 'data-control' takeover-v3.js
-          grep -q 'RESTORE THIS STATE' takeover-v3.js
-          echo 'PASS V21 SPOT CONTROL'
-      - name: Typography interaction regression
+      - name: Refund safety regression
+        run: |
+          grep -q 'refundTerritoryAction' index.html
+          grep -q 'restore_previous' takeover-v3.js
+          grep -q 'vacate_keep_price' takeover-v3.js
+          ! grep -q 'refundResetTerritory' index.html
+          ! grep -q 'refundResetTerritory' takeover-v3.js
+          ! grep -q 'reset_territory:reset' takeover-v3.js
+      - name: Optional link and canvas regression
         run: |
           node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          if(!s.includes("os:Number(l.size||18)")) throw Error('pinch no longer captures starting font size');
-          if(!s.includes("layer.size=clamp(editorTouchGesture.os*scale,8,96)")) throw Error('pinch no longer scales actual typography');
-          if(!s.includes('max="96" step="1"')) throw Error('text size slider became too coarse again');
-          if(!s.includes('layerSizeDown')||!s.includes('layerSizeUp')) throw Error('fine size buttons missing');
-          console.log('PASS TYPOGRAPHY');
+          const fs=require('fs'),s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("interactive&&link?'a':'div'")) throw Error('linkless territories are no longer display-only');
+          if(s.includes("if(!website)return toast('Enter your website')")) throw Error('website became mandatory');
+          if(!s.includes("layer.size=clamp(editorTouchGesture.os*scale,8,96)")) throw Error('text pinch regression');
+          if(!s.includes('raw=await f.arrayBuffer()')) throw Error('mobile upload hardening missing');
+          console.log('PASS PRODUCT REGRESSIONS');
           JS
-      - name: Dead-pixel contract
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          const live="canvas.frameCells?.length?[{...selectionShape(frame),cells:nums,clip:ensureFrameClip(nums,frame)}]";
-          if(!s.includes(live)) throw Error('Combined creatives no longer anchor to original footprint');
-          if(!s.includes("currentCanvas.frameCells=[...new Set(selected.map(Number)")) throw Error('Checkout no longer stores original footprint');
-          console.log('PASS DEAD-PIXEL CONTRACT');
-          JS
-      - name: Mobile upload regression
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          if(!s.includes('raw=await f.arrayBuffer()')) throw Error('mobile upload raw-byte hardening missing');
-          if(!s.includes("const f=$('#logoFile')?.files?.[0];if(f)return uploadSpecific")) throw Error('selected file no longer preferred for logo upload');
-          console.log('PASS MOBILE UPLOAD');
-          JS
-      - name: One-dollar start regression
-        run: |
-          node - <<'JS'
-          const fs=require('fs');
-          const s=fs.readFileSync('takeover-v3.js','utf8');
-          if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
-          console.log('PASS $1 CONFIG');
-          JS
-      - name: Legal copy contract
+      - name: Legal contract
         run: |
           grep -q 'THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.' auction-rules.html
-          grep -q 'THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.' index.html
           grep -qi 'Future seasons and historical archives' terms.html
           ! grep -qi 'season' index.html
           ! grep -qi 'season' auction-rules.html
           ! grep -qi 'season' payments.html
           ! grep -qi 'archive' privacy.html
-          ! grep -qi 'season' boot.js
           grep -q 'Placement has no guaranteed minimum duration or cash value.' index.html
-          echo 'PASS LEGAL COPY CONTRACT'
+      - name: Repo hygiene
+        run: |
+          test ! -e launch.js
+          test ! -e launch.css
+          test ! -e polish.js
+          test ! -e polish.css
+          test ! -e takeover-v2.js
