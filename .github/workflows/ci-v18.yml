@@ -2,9 +2,9 @@ name: TAKEOVER Frontend Smoke Test
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -20,10 +20,10 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V18 architecture
+      - name: V19 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=18' boot.js
+          grep -q 'takeover-v3.js?v=19' boot.js
           grep -q 'takeover-v3.css?v=18' boot.js
           grep -q 'boot.js?v=15' index.html
           grep -q 'frameCells' takeover-v3.js
@@ -37,6 +37,21 @@ jobs:
           grep -q 'takeoverParticle' takeover-v3.css
           grep -q 'motion-morph' takeover-v3.css
           grep -q 'motion-orbit' takeover-v3.css
+      - name: Pseudonymous optional-link contract
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("interactive&&link?'a':'div'")) throw Error('linkless territories are no longer display-only');
+          if(s.includes("if(!website)return toast('Enter your website')")) throw Error('website became mandatory in checkout again');
+          if(s.includes("if(!editorWebsite)return toast('Enter a website')")) throw Error('website became mandatory in canvas again');
+          if(!s.includes("editorWebsite=normalizeWebsite($('#companyWebsite').value||'')")) throw Error('canvas still fabricates a website');
+          console.log('PASS V19 OPTIONAL LINK');
+          JS
+          grep -q 'NAME / BRAND' index.html
+          grep -q 'LINK · OPTIONAL' index.html
+          grep -q 'Explicit nudity, pornography, or graphic sexual content' content-policy.html
+          grep -qi 'pseudonym' terms.html
       - name: Typography interaction regression
         run: |
           node - <<'JS'
@@ -46,7 +61,7 @@ jobs:
           if(!s.includes("layer.size=clamp(editorTouchGesture.os*scale,8,96)")) throw Error('pinch no longer scales actual typography');
           if(!s.includes('max="96" step="1"')) throw Error('text size slider became too coarse again');
           if(!s.includes('layerSizeDown')||!s.includes('layerSizeUp')) throw Error('fine size buttons missing');
-          console.log('PASS V18 TYPOGRAPHY');
+          console.log('PASS TYPOGRAPHY');
           JS
       - name: Dead-pixel contract
         run: |
@@ -56,7 +71,7 @@ jobs:
           const live="canvas.frameCells?.length?[{...selectionShape(frame),cells:nums,clip:ensureFrameClip(nums,frame)}]";
           if(!s.includes(live)) throw Error('Combined creatives no longer anchor to original footprint');
           if(!s.includes("currentCanvas.frameCells=[...new Set(selected.map(Number)")) throw Error('Checkout no longer stores original footprint');
-          console.log('PASS V18 DEAD-PIXEL CONTRACT');
+          console.log('PASS DEAD-PIXEL CONTRACT');
           JS
       - name: Mobile upload regression
         run: |
@@ -65,7 +80,7 @@ jobs:
           const s=fs.readFileSync('takeover-v3.js','utf8');
           if(!s.includes('raw=await f.arrayBuffer()')) throw Error('mobile upload raw-byte hardening missing');
           if(!s.includes("const f=$('#logoFile')?.files?.[0];if(f)return uploadSpecific")) throw Error('selected file no longer preferred for logo upload');
-          console.log('PASS V18 MOBILE UPLOAD');
+          console.log('PASS MOBILE UPLOAD');
           JS
       - name: One-dollar start regression
         run: |
@@ -73,7 +88,7 @@ jobs:
           const fs=require('fs');
           const s=fs.readFileSync('takeover-v3.js','utf8');
           if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
-          console.log('PASS V18 $1 CONFIG');
+          console.log('PASS $1 CONFIG');
           JS
       - name: Legal copy contract
         run: |
