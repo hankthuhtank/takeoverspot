@@ -1,0 +1,30 @@
+name: TAKEOVER Canvas V5
+on:
+  push:
+    branches: [main]
+    paths: ['tools/canvas_v5_patch.py']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python tools/canvas_v5_patch.py
+      - run: node --check takeover-v3.js
+      - name: Verify Canvas V5 changes
+        run: |
+          grep -q "max=\\\"200\\\"" takeover-v3.js
+          grep -q "font-display" takeover-v3.js
+          grep -q "logo-choose" takeover-v3.js
+          grep -q "takeover-v3.js?v=5" boot.js
+          grep -q "takeover-v3.css?v=5" boot.js
+      - name: Commit Canvas V5
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js takeover-v3.css index.html boot.js
+          git commit -m "Improve logo upload and expand canvas typography"
+          git push
