@@ -1,4 +1,4 @@
-name: TAKEOVER V22.3 Smoke Test
+name: TAKEOVER V1.0 Launch Gate
 'on':
   push:
     branches: [main]
@@ -20,12 +20,14 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V22.3 architecture
+      - name: V1.0 architecture
         run: |
-          grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=22.3' boot.js
-          grep -q 'takeover-v3.css?v=22.3' boot.js
-          grep -q 'boot.js?v=18' index.html
+          grep -q 'const APP_VERSION=' takeover-v3.js
+          grep -q "APP_VERSION='1.0'" takeover-v3.js
+          grep -q 'const TOTAL=16' takeover-v3.js || grep -q "TOTAL=16" takeover-v3.js
+          grep -q 'takeover-v3.js?v=1.0' boot.js
+          grep -q 'takeover-v3.css?v=1.0' boot.js
+          grep -q 'boot.js?v=1.0' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
           ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html
@@ -34,6 +36,7 @@ jobs:
           grep -q 'TAKEOVER V22.1 DESKTOP TYPE COMPLETION' takeover-v3.css
           grep -q 'TAKEOVER V22.2' takeover-v3.css
           grep -q 'TAKEOVER V22.3' takeover-v3.css
+          grep -q 'TAKEOVER V1.0 LAUNCH' takeover-v3.css
       - name: Core product contracts
         run: |
           grep -q 'frameCells' takeover-v3.js
@@ -47,13 +50,29 @@ jobs:
           grep -q 'admin_set_takeover_spot_price' takeover-v3.js
           grep -q 'admin_vacate_takeover_spot' takeover-v3.js
           grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
+      - name: Cross-device WYSIWYG contract
+        run: |
+          grep -q -- '--takeover-board-size:min(100vw' takeover-v3.css
+          grep -q 'width:var(--takeover-board-size)!important;height:var(--takeover-board-size)!important' takeover-v3.css
+          grep -q 'font-size:var(--layer-size,5cqw)!important' takeover-v3.css
+          grep -q "d.style.setProperty('--layer-size'" takeover-v3.js
+          grep -q "file.type!=='image/jpeg'" takeover-v3.js
+          grep -q 'EXACT PUBLISHED COMPOSITION · MOBILE = DESKTOP' takeover-v3.js
+          grep -q 'frame.style.aspectRatio' takeover-v3.js
+          node - <<'JS'
+          const fs=require('fs'),s=fs.readFileSync('takeover-v3.js','utf8'),c=fs.readFileSync('takeover-v3.css','utf8');
+          if(s.includes('d.style.fontSize=`${clamp(l.size||18,8,200)}px`')) throw Error('editor-only pixel typography returned');
+          if(!c.includes('.territory,.canvas-stage{container-type:size!important}')) throw Error('shared canvas query space missing');
+          if(!c.includes('@media(max-width:720px)')||!c.includes('--takeover-board-size')) throw Error('mobile canonical board contract missing');
+          console.log('PASS CROSS-DEVICE WYSIWYG CONTRACT');
+          JS
       - name: Canvas preview regression
         run: |
           grep -q 'toggleCanvasPreview' takeover-v3.js
           grep -q 'editorPreviewMode' takeover-v3.js
           grep -q 'canvas-preview-live' takeover-v3.js
           grep -q "btn.textContent=editorPreviewMode?'EDIT':'PREVIEW'" takeover-v3.js
-          grep -q 'LIVE PREVIEW · EXACT BOARD RENDER' takeover-v3.js
+          grep -q 'EXACT PUBLISHED COMPOSITION · MOBILE = DESKTOP' takeover-v3.js
           grep -q 'canvas-stage.is-preview .editor-grid' takeover-v3.css
           grep -q 'canvas-stage .canvas-preview-live .canvas-layer' takeover-v3.css
       - name: Spot control containment regression
