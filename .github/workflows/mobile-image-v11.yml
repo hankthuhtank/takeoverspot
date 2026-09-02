@@ -1,0 +1,120 @@
+name: TAKEOVER Mobile and Image V11
+'on':
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/mobile-image-v11.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch image handling and mobile board
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          js=Path('takeover-v3.js')
+          s=js.read_text()
+
+          state="const localAssetUrls=new Map();"
+          helper=r'''const IMAGE_INPUT_LIMIT=25*1024*1024,IMAGE_STORED_LIMIT=4*1024*1024;
+function canvasToBlob(canvas,type='image/webp',quality=.86){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('Could not process image')),type,quality))}
+async function decodeImageFile(file){if('createImageBitmap'in window)return createImageBitmap(file);return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not read image'))};img.src=url})}
+async function prepareImageFile(file){if(!file)return null;if(!String(file.type||'').startsWith('image/'))throw new Error('Choose an image file');if(file.size>IMAGE_INPUT_LIMIT)throw new Error('That image is unusually large. Use an image under 25 MB.');const native=['image/png','image/jpeg','image/webp'].includes(file.type);if(native&&file.size<=IMAGE_STORED_LIMIT)return file;let source;try{source=await decodeImageFile(file)}catch{throw new Error('This image format could not be processed. Try JPG, PNG or WebP.')}const ow=Number(source.width||source.naturalWidth||1),oh=Number(source.height||source.naturalHeight||1),base=(file.name||'image').replace(/\.[^.]+$/,'')||'image';let best=null;for(const maxSide of [2400,1900,1500,1200]){const scale=Math.min(1,maxSide/Math.max(ow,oh)),w=Math.max(1,Math.round(ow*scale)),h=Math.max(1,Math.round(oh*scale)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)continue;ctx.drawImage(source,0,0,w,h);for(const q of [.9,.82,.74,.66,.58]){const blob=await canvasToBlob(canvas,'image/webp',q);best=blob;if(blob.size<=IMAGE_STORED_LIMIT)break}if(best?.size<=IMAGE_STORED_LIMIT)break}if(typeof source.close==='function')source.close();if(!best||best.size>IMAGE_STORED_LIMIT)throw new Error('This image could not be optimized enough. Try a smaller photo.');return new File([best],base+'.webp',{type:'image/webp',lastModified:Date.now()})}'''
+          if state not in s: raise SystemExit('image state marker missing')
+          if 'async function prepareImageFile(' not in s:
+              s=s.replace(state,state+'\n'+helper,1)
+
+          old="async function storeLocalAsset(file,max=4194304){if(!file)return null;if(file.size>max)throw new Error(max<=2097152?'Logo is too large (2 MB max)':'Image is too large (4 MB max)');if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Use PNG, JPG or WebP');const id=crypto.randomUUID(),ref=LOCAL_ASSET_PREFIX+id,db=await openLocalAssetDb();await new Promise((resolve,reject)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put({blob:file,createdAt:Date.now()},id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();localAssetUrls.set(ref,URL.createObjectURL(file));return ref}"
+          new="async function storeLocalAsset(file){if(!file)return null;const prepared=await prepareImageFile(file),id=crypto.randomUUID(),ref=LOCAL_ASSET_PREFIX+id,db=await openLocalAssetDb();await new Promise((resolve,reject)=>{const tx=db.transaction('assets','readwrite');tx.objectStore('assets').put({blob:prepared,createdAt:Date.now()},id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();localAssetUrls.set(ref,URL.createObjectURL(prepared));return ref}"
+          if old not in s: raise SystemExit('storeLocalAsset marker missing')
+          s=s.replace(old,new,1)
+
+          old_logo="if($('#logoFile'))$('#logoFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{selectedLogoUrl=await storeLocalAsset(f,2097152);setLogoPreview('#logoPreview','#logoFile',selectedLogoUrl,'CLICK TO CHOOSE LOGO');renderPurchaseCanvasPreview()}catch(err){toast(err.message)}};"
+          new_logo="if($('#logoFile'))$('#logoFile').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>IMAGE_STORED_LIMIT)toast('Optimizing image…');selectedLogoUrl=await storeLocalAsset(f);setLogoPreview('#logoPreview','#logoFile',selectedLogoUrl,'CLICK TO CHOOSE LOGO');renderPurchaseCanvasPreview()}catch(err){toast(err.message)}};"
+          if old_logo not in s: raise SystemExit('logo onchange marker missing')
+          s=s.replace(old_logo,new_logo,1)
+
+          old_upload="async function uploadSpecific(f,bucket='takeover-creative',max=4194304){if(!f)return null;if(!session)throw new Error('Sign in when you are ready to pay');if(f.size>max)throw new Error('Image is too large');if(!['image/png','image/jpeg','image/webp'].includes(f.type))throw new Error('Use PNG, JPG or WebP');const ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg',path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;const {error}=await sb.storage.from(bucket).upload(path,f,{contentType:f.type,upsert:false});if(error)throw error;return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}"
+          new_upload="async function uploadSpecific(f,bucket='takeover-creative',max=IMAGE_STORED_LIMIT){if(!f)return null;if(!session)throw new Error('Sign in when you are ready to pay');f=await prepareImageFile(f);if(f.size>max)throw new Error('Image could not be optimized for upload');const ext=f.type==='image/png'?'png':f.type==='image/webp'?'webp':'jpg',path=`${session.user.id}/${crypto.randomUUID()}.${ext}`;const {error}=await sb.storage.from(bucket).upload(path,f,{contentType:f.type,upsert:false});if(error)throw error;return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}"
+          if old_upload not in s: raise SystemExit('uploadSpecific marker missing')
+          s=s.replace(old_upload,new_upload,1)
+
+          old_take="async function uploadTakeoverLogo(){if(String(selectedLogoUrl||'').startsWith(LOCAL_ASSET_PREFIX))return uploadLocalRef(selectedLogoUrl,'takeover-logos',2097152);const f=$('#logoFile')?.files?.[0];if(f)return uploadSpecific(f,'takeover-logos',2097152);return selectedLogoUrl||profile?.logo_url||null}"
+          new_take="async function uploadTakeoverLogo(){if(String(selectedLogoUrl||'').startsWith(LOCAL_ASSET_PREFIX))return uploadLocalRef(selectedLogoUrl,'takeover-logos',IMAGE_STORED_LIMIT);const f=$('#logoFile')?.files?.[0];if(f)return uploadSpecific(f,'takeover-logos',IMAGE_STORED_LIMIT);return selectedLogoUrl||profile?.logo_url||null}"
+          if old_take not in s: raise SystemExit('uploadTakeoverLogo marker missing')
+          s=s.replace(old_take,new_take,1)
+
+          s=s.replace('accept=\"image/png,image/jpeg,image/webp\"','accept=\"image/*\"')
+          js.write_text(s)
+
+          html=Path('index.html')
+          h=html.read_text().replace('accept="image/png,image/jpeg,image/webp"','accept="image/*"').replace('boot.js?v=6','boot.js?v=7')
+          html.write_text(h)
+
+          css=Path('takeover-v3.css')
+          c=css.read_text()
+          mobile=r'''
+
+/* TAKEOVER V11 — mobile board geometry: preserve the 4x4 canvas instead of stretching it to portrait viewport */
+@media(max-width:720px){
+  .board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{
+    --mobile-board-size:min(100vw,calc(100dvh - 170px));
+    inset:auto!important;
+    left:50%!important;
+    right:auto!important;
+    top:clamp(88px,12dvh,112px)!important;
+    width:var(--mobile-board-size)!important;
+    height:var(--mobile-board-size)!important;
+    transform:translateX(-50%)!important;
+  }
+  .territory .canvas-layer{font-size:clamp(5px,var(--layer-size,5cqw),46px)!important}
+  .canvas-site{left:4px!important;bottom:3px!important;font-size:5px!important;max-width:86%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .take-pill{right:3px!important;bottom:3px!important;min-width:0!important;min-height:25px!important;max-width:calc(100% - 6px)!important;padding:6px!important;font-size:6px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .available-cell{gap:3px!important}.available-cell span{font-size:6px!important}.available-cell b{font-size:7px!important;text-align:center!important;padding:0 3px!important}
+}
+@media(max-width:720px) and (orientation:landscape){
+  .board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{--mobile-board-size:min(72dvh,100vw);top:72px!important}
+  .site-legal{display:none!important}
+}
+'''
+          if 'TAKEOVER V11 — mobile board geometry' not in c:c+=mobile
+          css.write_text(c)
+
+          boot=Path('boot.js')
+          b=boot.read_text().replace('takeover-v3.css?v=9','takeover-v3.css?v=11').replace('takeover-v3.js?v=10','takeover-v3.js?v=11')
+          boot.write_text(b)
+
+          ci=Path('.github/workflows/ci.yml')
+          q=ci.read_text().replace("takeover-v3.js?v=7","takeover-v3.js?v=11").replace("takeover-v3.css?v=7","takeover-v3.css?v=11")
+          needle="          grep -q 'storeLocalAsset' takeover-v3.js\n"
+          if "prepareImageFile" not in q:q=q.replace(needle,needle+"          grep -q 'prepareImageFile' takeover-v3.js\n          grep -q 'TAKEOVER V11 — mobile board geometry' takeover-v3.css\n")
+          ci.write_text(q)
+          PY
+      - name: Verify V11
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q 'prepareImageFile' takeover-v3.js
+          grep -q 'IMAGE_INPUT_LIMIT=25' takeover-v3.js
+          grep -q "takeover-logos',IMAGE_STORED_LIMIT" takeover-v3.js
+          if grep -q 'Logo is too large (2 MB max)' takeover-v3.js; then exit 1; fi
+          grep -q 'accept="image/\*"' index.html
+          grep -q 'TAKEOVER V11 — mobile board geometry' takeover-v3.css
+          grep -q 'height:var(--mobile-board-size)' takeover-v3.css
+          grep -q 'takeover-v3.js?v=11' boot.js
+          grep -q 'takeover-v3.css?v=11' boot.js
+          grep -q 'boot.js?v=7' index.html
+          grep -q 'takeover-v3.js?v=11' .github/workflows/ci.yml
+          grep -q 'takeover-v3.css?v=11' .github/workflows/ci.yml
+      - name: Commit V11
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js takeover-v3.css index.html boot.js .github/workflows/ci.yml
+          git commit -m "Fix large image uploads and mobile board geometry"
+          git push
