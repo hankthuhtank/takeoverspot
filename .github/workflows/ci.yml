@@ -27,11 +27,14 @@ jobs:
           grep -q 'id=\"canvasWebsite\"' takeover-v3.js
           grep -q 'CANVAS_PRESETS' takeover-v3.js
           grep -q 'storeLocalAsset' takeover-v3.js
+          grep -q 'normalizeImgRef' takeover-v3.js
           grep -q 'materializeCanvasAssets' takeover-v3.js
           grep -q "takeover-admin-refund" takeover-v3.js
           grep -q "takeover-launch-health" takeover-v3.js
           grep -q 'id="refundModal"' index.html
           grep -q 'id="adminHealth"' index.html
+          if grep -q 'CENTER=' takeover-v3.js; then exit 1; fi
+          if grep -q 'isCenterSelection' takeover-v3.js; then exit 1; fi
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
