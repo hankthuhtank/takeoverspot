@@ -20,8 +20,8 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=6' boot.js
-          grep -q 'takeover-v3.css?v=6' boot.js
+          grep -q 'takeover-v3.js?v=7' boot.js
+          grep -q 'takeover-v3.css?v=7' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
           grep -q 'id=\"canvasCompany\"' takeover-v3.js
           grep -q 'id=\"canvasWebsite\"' takeover-v3.js
@@ -34,6 +34,8 @@ jobs:
           grep -q 'selectionComponents' takeover-v3.js
           grep -q 'ensureShapeClip' takeover-v3.js
           grep -q 'syncEditorStageShape' takeover-v3.js
+          grep -q 'shapeLayerGeom' takeover-v3.js
+          grep -q 'purchase-preview-shape' takeover-v3.js
           grep -q 'max=\"200\"' takeover-v3.js
           grep -q "takeover-admin-refund" takeover-v3.js
           grep -q "takeover-launch-health" takeover-v3.js
@@ -44,7 +46,7 @@ jobs:
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
-      - name: 16-cell board and Canvas V6 flows
+      - name: 16-cell board and Canvas V7 flows
         run: |
           cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
@@ -69,7 +71,7 @@ jobs:
             const social=[...w.document.querySelectorAll('.social-pulse a')].map(a=>a.textContent).join('·');
             if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);
 
-            cells[2].click(); // spot 3 only
+            cells[2].click();
             if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 3 did not open');
             w.document.querySelector('#companyName').value='Example Co';
             w.document.querySelector('#companyWebsite').value='example.com';
@@ -83,17 +85,25 @@ jobs:
             w.document.querySelector('#canvasClose').click();
 
             const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
-            clickMini(7);clickMini(11);clickMini(12); // exact |_ shape: 3,7,11,12
+            clickMini(7);clickMini(11);clickMini(12);
             if(!/4 connected spots/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Connected territory title wrong: '+w.document.querySelector('#takeoverTitle').textContent);
             w.document.querySelector('#openPurchaseCanvas').click();
             if(multi.hidden)throw Error('Multi-spot controls should show for multiple spots');
             if(stage.style.aspectRatio!=='2 / 3'&&stage.style.aspectRatio!=='2/3')throw Error('Combined shape bounds wrong: '+stage.style.aspectRatio);
             if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined |_ shape clip missing');
+            let fitted=w.document.querySelector('#canvasStage .editor-layer');
+            if(!fitted||parseFloat(fitted.style.width)>50)throw Error('Combined shape content was not fitted inside occupied cells');
+            const preview=w.document.querySelector('#purchaseCanvasPreview .canvas-creative');
+            if(preview?.hasAttribute('href'))throw Error('Purchase preview must not be a live website link');
             w.document.querySelector('#displayDivided').click();
             if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Divided design should use a single square');
             if(stage.style.clipPath!=='none')throw Error('Divided design should not use combined clipping');
+            fitted=w.document.querySelector('#canvasStage .editor-layer');
+            if(!fitted||parseFloat(fitted.style.width)<70)throw Error('Divided design did not restore square content geometry');
             w.document.querySelector('#displayCombined').click();
             if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined shape did not restore');
+            fitted=w.document.querySelector('#canvasStage .editor-layer');
+            if(!fitted||parseFloat(fitted.style.width)>50)throw Error('Combined fitted geometry did not restore');
 
             if(w.document.querySelector('#canvasCompany').value!=='Example Co')throw Error('Canvas company did not load');
             if(!w.document.querySelector('#canvasWebsite').value.includes('example.com'))throw Error('Canvas website did not load');
@@ -104,7 +114,7 @@ jobs:
             if(!text)throw Error('Text editor missing');
             text.value='HELLO WORLD';text.dispatchEvent(new w.Event('input',{bubbles:true}));
             if(w.document.querySelector('#layerText')!==text)throw Error('Text editor was recreated during typing');
-            console.log('PASS TAKEOVER CANVAS V6');process.exit(0);
+            console.log('PASS TAKEOVER CANVAS V7');process.exit(0);
           },450);
           JS
           timeout 12s node v3.cjs
