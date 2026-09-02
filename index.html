@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#f7f7f3">
 <title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
 <meta name="description" content="Buy part of the webpage. Make it yours. Keep it until somebody pays more.">
@@ -118,6 +120,7 @@
       <button class="admin-tab" data-admin-tab="board">LIVE BOARD</button>
       <button class="admin-tab" data-admin-tab="purchases">PURCHASES</button>
       <button class="admin-tab" data-admin-tab="accounts">ACCOUNTS</button>
+      <button class="admin-tab" data-admin-tab="support">SUPPORT</button>
       <button class="admin-tab" data-admin-tab="storage">STORAGE</button>
       <button class="admin-tab" data-admin-tab="security">SECURITY</button>
       <button class="admin-tab" data-admin-tab="settings">SETTINGS</button>
@@ -142,6 +145,10 @@
 
       <section class="admin-pane" data-admin-pane="accounts">
         <div class="admin-block"><div class="admin-block-head admin-search-head"><div><b>ACCOUNTS</b><span>Search customers and see ownership/purchase history.</span></div><input id="adminAccountSearch" type="search" placeholder="Search email or company"></div><div id="adminAccounts"><div class="empty">Loading accounts…</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="support">
+        <div class="admin-block"><div class="admin-block-head"><div><b>SUPPORT INBOX</b><span>Private messages submitted through the public contact form.</span></div></div><div id="adminSupport"><div class="empty">Loading support requests…</div></div></div>
       </section>
 
       <section class="admin-pane" data-admin-pane="storage">
@@ -195,6 +202,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="boot.js?v=9"></script>
+<script src="boot.js?v=10"></script>
 </body>
 </html>
