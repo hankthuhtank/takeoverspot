@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - tools/canvas_v7_patch.py
+      - tools/canvas_v7_trigger.txt
       - .github/workflows/canvas-v7.yml
 permissions:
   contents: write
