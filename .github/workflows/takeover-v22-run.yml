@@ -38,6 +38,7 @@ jobs:
         run: |
           git config user.name 'takeover-bot'
           git config user.email 'takeover-bot@users.noreply.github.com'
+          git restore .github/workflows/ci-v18.yml
           git add -A
           git commit -m 'TAKEOVER V22 security hardening and desktop readability'
           git push
