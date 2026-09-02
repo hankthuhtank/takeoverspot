@@ -30,3 +30,22 @@
 #rulesModal{width:min(760px,calc(100vw - 28px))!important}#rulesModal .panel-head{margin-bottom:14px}#rulesModal .panel-head h2{font-size:34px!important;letter-spacing:-.045em}#rulesModal .rules-list{counter-reset:takeover-rule;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px!important;margin:0 0 16px!important}#rulesModal .rule{counter-increment:takeover-rule;position:relative;min-height:150px!important;padding:22px 18px 18px 64px!important;border:1px solid #d8d8d1!important;border-radius:16px!important;background:#fff!important;display:flex!important;flex-direction:column;justify-content:center}#rulesModal .rule:before{content:'0' counter(takeover-rule);position:absolute;left:17px;top:19px;font:900 22px 'DM Mono',monospace;letter-spacing:-.08em;color:#aaa}#rulesModal .rule b{font-size:18px!important;line-height:1.08!important;letter-spacing:-.025em}#rulesModal .rule span{font-size:11px!important;line-height:1.4!important;color:#666!important;margin-top:8px!important}.rules-fineprint{border-top:1px solid #deded8;padding-top:11px;margin-top:2px}.rules-fineprint .rules-copy{font-size:9.5px!important;line-height:1.5!important;color:#777!important;margin:6px 0!important}.rules-fineprint .rules-copy strong{color:#333!important;font-size:9.5px!important}.rules-fineprint+.legal-links{margin-top:11px!important}
 @media(max-width:900px){.canvas-shell{grid-template-columns:1fr!important}.canvas-side{padding-left:0!important}.canvas-stage-wrap{min-height:350px!important}.preset-card{flex-basis:86px}}
 @media(max-width:650px){#rulesModal .rules-list{grid-template-columns:1fr!important}#rulesModal .rule{min-height:118px!important}#rulesModal .panel-head h2{font-size:29px!important}.canvas-stage-wrap{min-height:280px!important;padding:10px!important}.canvas-stage-tip{font-size:6.5px}.canvas-presets{gap:6px}.preset-card{flex-basis:78px}.preset-thumb{height:48px}.canvas-no-login{max-width:260px}}
+
+
+/* TAKEOVER CANVAS V5 — explicit logo picker + expanded typography */
+.logo-drop{cursor:pointer!important;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease!important;gap:10px!important;flex-direction:column!important}
+.logo-drop:hover{border-color:#111!important;background:#fff!important;box-shadow:inset 0 0 0 1px rgba(17,17,17,.05)!important}
+.logo-drop input[type="file"]{display:none!important}
+.logo-drop span{pointer-events:none!important}
+.logo-drop img{pointer-events:none!important}
+.logo-choose{cursor:pointer!important;border:0!important;border-radius:999px!important;background:#111!important;color:#fff!important;padding:9px 13px!important;font:850 8px 'DM Mono',monospace!important;letter-spacing:.05em!important;box-shadow:0 4px 14px rgba(0,0,0,.09)!important}
+.logo-choose:hover{transform:translateY(-1px)}
+.canvas-layer.font-modern,.editor-layer.font-modern{font-family:'Space Grotesk',Manrope,Arial,sans-serif!important}
+.canvas-layer.font-condensed,.editor-layer.font-condensed{font-family:'Oswald','Arial Narrow',Arial,sans-serif!important}
+.canvas-layer.font-display,.editor-layer.font-display{font-family:'Bebas Neue','Arial Narrow',Arial,sans-serif!important;letter-spacing:.02em}
+.canvas-layer.font-editorial,.editor-layer.font-editorial{font-family:'Playfair Display',Georgia,'Times New Roman',serif!important}
+.canvas-layer.font-serif,.editor-layer.font-serif{font-family:'Libre Baskerville',Georgia,'Times New Roman',serif!important}
+.canvas-layer.font-script,.editor-layer.font-script{font-family:'Pacifico','Brush Script MT',cursive!important;font-weight:400!important}
+.canvas-layer.font-tech,.editor-layer.font-tech{font-family:'Orbitron','DM Mono',monospace!important}
+.canvas-row #layerSize{min-width:0;flex:1;accent-color:#111}
+.size-readout{flex:0 0 50px;text-align:right;font:800 9px 'DM Mono',monospace;color:#111}
