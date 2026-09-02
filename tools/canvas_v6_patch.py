@@ -67,3 +67,4 @@ js_path.write_text(js)
 css_path.write_text(css)
 boot_path.write_text(boot)
 print('TAKEOVER Canvas V6 patch applied')
+# workflow trigger
