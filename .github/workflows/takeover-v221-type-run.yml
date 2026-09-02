@@ -1,0 +1,30 @@
+name: TAKEOVER V22.1 Type Apply
+'on':
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/takeover-v221-type-run.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply typography completion
+        run: python .takeover-v221-type.py
+      - name: Verify
+        run: |
+          node --check boot.js
+          grep -q 'TAKEOVER V22.1 DESKTOP TYPE COMPLETION' takeover-v3.css
+          grep -q 'takeover-v3.css?v=22.1' boot.js
+      - name: Commit
+        run: |
+          git config user.name 'takeover-bot'
+          git config user.email 'takeover-bot@users.noreply.github.com'
+          git add takeover-v3.css boot.js
+          git commit -m 'TAKEOVER V22.1 finish desktop typography'
+          git push
