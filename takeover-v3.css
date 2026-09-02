@@ -49,3 +49,15 @@
 .canvas-layer.font-tech,.editor-layer.font-tech{font-family:'Orbitron','DM Mono',monospace!important}
 .canvas-row #layerSize{min-width:0;flex:1;accent-color:#111}
 .size-readout{flex:0 0 50px;text-align:right;font:800 9px 'DM Mono',monospace;color:#111}
+
+
+/* TAKEOVER CANVAS V6 — exact multi-spot geometry + single native logo target */
+.logo-drop{position:relative!important;cursor:pointer!important}
+.logo-trigger{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:14px;cursor:pointer;border-radius:inherit}
+.logo-trigger:hover{background:rgba(255,255,255,.35)}
+.logo-trigger img{width:auto!important;height:auto!important;max-width:88%!important;max-height:88px!important;object-fit:contain!important;display:block!important}
+.logo-trigger span:not(.logo-choose){font:700 10px 'DM Mono',monospace;color:#777;letter-spacing:.07em;pointer-events:none}
+.logo-choose{display:inline-flex!important;align-items:center;justify-content:center;pointer-events:none!important;user-select:none}
+#multiSpotSection[hidden]{display:none!important}
+.canvas-stage{transform-origin:center;transition:clip-path .16s ease!important}
+.canvas-stage[data-display="divided"]{max-width:660px}
