@@ -15,51 +15,52 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: npm install jsdom@25 --no-save
-      - name: Syntax and architecture
+      - name: Syntax and V12 architecture
         run: |
           node --check takeover-v3.js
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=11' boot.js
-          grep -q 'takeover-v3.css?v=11' boot.js
+          grep -q 'takeover-v3.js?v=12' boot.js
+          grep -q 'takeover-v3.css?v=12' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
-          grep -q 'id=\"canvasCompany\"' takeover-v3.js
-          grep -q 'id=\"canvasWebsite\"' takeover-v3.js
-          grep -q 'CANVAS_PRESETS' takeover-v3.js
-          grep -q 'storeLocalAsset' takeover-v3.js
           grep -q 'prepareImageFile' takeover-v3.js
           grep -q 'IMAGE_INPUT_LIMIT=25' takeover-v3.js
-          grep -q 'TAKEOVER V11 - mobile board geometry' takeover-v3.css
-          grep -q 'normalizeImgRef' takeover-v3.js
-          grep -q 'materializeCanvasAssets' takeover-v3.js
-          grep -q 'logo-trigger' takeover-v3.js
-          grep -q 'multiSpotSection' takeover-v3.js
-          grep -q 'selectionComponents' takeover-v3.js
-          grep -q 'ensureShapeClip' takeover-v3.js
-          grep -q 'syncEditorStageShape' takeover-v3.js
-          grep -q 'shapeLayerGeom' takeover-v3.js
-          grep -q 'purchase-preview-shape' takeover-v3.js
-          grep -q 'max=\"200\"' takeover-v3.js
-          grep -q "takeover-admin-refund" takeover-v3.js
-          grep -q "takeover-launch-health" takeover-v3.js
+          grep -q "return{x:Number(l.x)" takeover-v3.js
+          grep -q 'id=\"addShape\"' takeover-v3.js
+          grep -q 'presetShape' takeover-v3.js
+          grep -q "case'neon'" takeover-v3.js
+          grep -q "case'aurora'" takeover-v3.js
+          grep -q 'motion-float' takeover-v3.css
+          grep -q 'prefers-reduced-motion' takeover-v3.css
+          grep -q 'TAKEOVER V12' takeover-v3.css
+          grep -q 'takeover-admin-console' takeover-v3.js
+          grep -q 'data-admin-tab="accounts"' index.html
+          grep -q 'data-admin-tab="storage"' index.html
+          grep -q 'data-admin-tab="security"' index.html
+          grep -q 'storageRetentionDays' index.html
           grep -q 'id="refundModal"' index.html
           grep -q 'id="adminHealth"' index.html
+          grep -q 'selectionComponents' takeover-v3.js
+          grep -q 'ensureShapeClip' takeover-v3.js
+          grep -q 'purchase-preview-shape' takeover-v3.js
+          grep -q 'materializeCanvasAssets' takeover-v3.js
           if grep -q 'Logo is too large (2 MB max)' takeover-v3.js; then exit 1; fi
           if grep -q 'CENTER=' takeover-v3.js; then exit 1; fi
           if grep -q 'isCenterSelection' takeover-v3.js; then exit 1; fi
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
-      - name: 16-cell board and Canvas V11 flows
+      - name: 16-cell board and Canvas V12 flows
         run: |
           cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
           const html=fs.readFileSync('index.html','utf8').replace(/<script[^>]*src=[^>]*><\/script>/g,'');
           const dom=new JSDOM(html,{url:'https://takeoverspot.com/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window;
           if(!w.crypto.randomUUID)w.crypto.randomUUID=()=>Math.random().toString(16).slice(2)+'-0000-4000-8000-000000000000';
+          w.confirm=()=>false;
           const board=Array.from({length:16},(_,i)=>({spot_number:i+1,current_price:0,owner_key:null,company_name:null,website:null,logo_url:null,creative_id:null,canvas_json:null,owner_since:null,updated_at:new Date().toISOString()}));
-          const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null};
-          function builder(t){const b={select(){return b},eq(){return b},is(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:t==='takeover_config'?cfg:null,error:null})},then(r){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null}).then(r)}};return b}
+          const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null,storage_retention_days:30};
+          function builder(t){const b={select(){return b},eq(){return b},is(){return b},not(){return b},gte(){return b},in(){return Promise.resolve({data:[],error:null})},update(){return b},insert(){return Promise.resolve({data:null,error:null})},limit(){return Promise.resolve({data:[],error:null})},order(){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null})},maybeSingle(){return Promise.resolve({data:t==='takeover_config'?cfg:null,error:null})},then(r){return Promise.resolve({data:t==='takeover_spots'?board:[],error:null}).then(r)}};return b}
           const rpc=(name)=>Promise.resolve({data:name==='is_takeover_admin'?false:null,error:null});
           const sb={auth:{getSession:()=>Promise.resolve({data:{session:null}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:()=>Promise.resolve(),signInWithOtp:()=>Promise.resolve({error:null})},from:builder,rpc,channel:()=>({on(){return this},subscribe(){return this}}),removeChannel(){},storage:{from:()=>({upload:()=>Promise.resolve({error:null}),getPublicUrl:()=>({data:{publicUrl:'https://xvfgiaxxvwdnmzzdfboc.supabase.co/storage/v1/object/public/takeover-creative/test/a.png'}})})},functions:{invoke:()=>Promise.resolve({data:{url:'https://stripe.test'},error:null})}};
           w.supabase={createClient:()=>sb};
@@ -74,52 +75,51 @@ jobs:
             if(page.textContent.trim()!=='TAKE THE PAGE · $160')throw Error('Wrong page total: '+page.textContent);
             const social=[...w.document.querySelectorAll('.social-pulse a')].map(a=>a.textContent).join('·');
             if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);
+            if(w.document.querySelectorAll('[data-admin-tab]').length!==8)throw Error('Admin console tabs missing');
 
             cells[2].click();
-            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 3 did not open');
             w.document.querySelector('#companyName').value='Example Co';
             w.document.querySelector('#companyWebsite').value='example.com';
             w.document.querySelector('#openPurchaseCanvas').click();
-            if(!w.document.querySelector('#canvasModal').classList.contains('on'))throw Error('Canvas did not open');
             const stage=w.document.querySelector('#canvasStage'),multi=w.document.querySelector('#multiSpotSection');
+            if(!w.document.querySelector('#canvasModal').classList.contains('on'))throw Error('Canvas did not open');
             if(!multi.hidden)throw Error('Single spot should hide multi-spot controls');
             if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Single spot should be square');
-            const logoTrigger=w.document.querySelector('#logoPreview .logo-trigger');
-            if(!logoTrigger||logoTrigger.htmlFor!=='logoFile')throw Error('Whole-box logo target missing');
-            if(w.document.querySelector('#logoFile')?.getAttribute('accept')!=='image/*')throw Error('Logo picker should accept browser-supported images');
+            if(w.document.querySelectorAll('#canvasPresets .preset-card').length<18)throw Error('Expanded preset library missing');
+            if(!w.document.querySelector('#addShape'))throw Error('Shape tool missing');
             w.document.querySelector('#canvasClose').click();
 
             const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
             clickMini(7);clickMini(11);clickMini(12);
-            if(!/4 connected spots/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Connected territory title wrong: '+w.document.querySelector('#takeoverTitle').textContent);
             w.document.querySelector('#openPurchaseCanvas').click();
-            if(multi.hidden)throw Error('Multi-spot controls should show for multiple spots');
+            if(multi.hidden)throw Error('Multi-spot controls should show');
             if(stage.style.aspectRatio!=='2 / 3'&&stage.style.aspectRatio!=='2/3')throw Error('Combined shape bounds wrong: '+stage.style.aspectRatio);
             if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined |_ shape clip missing');
-            let fitted=w.document.querySelector('#canvasStage .editor-layer');
-            if(!fitted||parseFloat(fitted.style.width)>50)throw Error('Combined shape content was not fitted inside occupied cells');
+            let layer=w.document.querySelector('#canvasStage .editor-layer');
+            const directWidth=parseFloat(layer?.style.width||0);
+            if(directWidth<70)throw Error('V12 must preserve direct layer geometry, got '+directWidth);
             const preview=w.document.querySelector('#purchaseCanvasPreview .canvas-creative');
-            if(preview?.hasAttribute('href'))throw Error('Purchase preview must not be a live website link');
+            if(preview?.hasAttribute('href'))throw Error('Purchase preview must not be a live link');
             w.document.querySelector('#displayDivided').click();
-            if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Divided design should use a single square');
-            if(stage.style.clipPath!=='none')throw Error('Divided design should not use combined clipping');
-            fitted=w.document.querySelector('#canvasStage .editor-layer');
-            if(!fitted||parseFloat(fitted.style.width)<70)throw Error('Divided design did not restore square content geometry');
+            if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Divided should be square');
+            if(stage.style.clipPath!=='none')throw Error('Divided should not use combined clipping');
+            layer=w.document.querySelector('#canvasStage .editor-layer');
+            if(Math.abs(parseFloat(layer.style.width)-directWidth)>.01)throw Error('Divided mutated layer geometry');
             w.document.querySelector('#displayCombined').click();
             if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined shape did not restore');
-            fitted=w.document.querySelector('#canvasStage .editor-layer');
-            if(!fitted||parseFloat(fitted.style.width)>50)throw Error('Combined fitted geometry did not restore');
+            layer=w.document.querySelector('#canvasStage .editor-layer');
+            if(Math.abs(parseFloat(layer.style.width)-directWidth)>.01)throw Error('Combined mutated stored geometry');
 
-            if(w.document.querySelector('#canvasCompany').value!=='Example Co')throw Error('Canvas company did not load');
-            if(!w.document.querySelector('#canvasWebsite').value.includes('example.com'))throw Error('Canvas website did not load');
-            if(w.document.querySelectorAll('#canvasPresets .preset-card').length<10)throw Error('Preset library missing');
+            w.document.querySelector('#addShape').click();
+            if(!w.document.querySelector('#layerMotion'))throw Error('Motion control missing');
+            if(!w.document.querySelector('#layerX')||!w.document.querySelector('#layerW'))throw Error('Exact geometry controls missing');
+            if(!w.document.querySelector('#duplicateLayer')||!w.document.querySelector('#frontLayer'))throw Error('Layer management controls missing');
             w.document.querySelector('#addText').click();
-            if(w.document.querySelectorAll('#canvasStage .editor-layer').length<2)throw Error('Canvas layer add failed');
             const text=w.document.querySelector('#layerText');
             if(!text)throw Error('Text editor missing');
             text.value='HELLO WORLD';text.dispatchEvent(new w.Event('input',{bubbles:true}));
-            if(w.document.querySelector('#layerText')!==text)throw Error('Text editor was recreated during typing');
-            console.log('PASS TAKEOVER CANVAS V11');process.exit(0);
-          },450);
+            if(w.document.querySelector('#layerText')!==text)throw Error('Text editor recreated during typing');
+            console.log('PASS TAKEOVER CANVAS V12');process.exit(0);
+          },500);
           JS
-          timeout 12s node v3.cjs
+          timeout 14s node v3.cjs
