@@ -1,0 +1,56 @@
+name: TAKEOVER Canvas Consistency
+'on':
+  push:
+    branches: [main]
+    paths: ['.github/workflows/takeover-v13-canvas-consistency.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve intentional canvas bleed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('takeover-v3.js'); s=p.read_text()
+          old="x:clamp(l.x,0,95),y:clamp(l.y,0,95),w:clamp(l.w||40,5,100),h:clamp(l.h||20,5,100)"
+          new="x:clamp(l.x,-25,125),y:clamp(l.y,-25,125),w:clamp(l.w||40,5,150),h:clamp(l.h||20,5,150)"
+          if old not in s: raise SystemExit('normalizer geometry marker missing')
+          s=s.replace(old,new,1)
+          old="l.x=clamp(ox+d.x,0,100-l.w);l.y=clamp(oy+d.y,0,100-l.h)"
+          new="l.x=clamp(ox+d.x,-25,Math.max(-25,125-l.w));l.y=clamp(oy+d.y,-25,Math.max(-25,125-l.h))"
+          if old not in s: raise SystemExit('drag clamp marker missing')
+          s=s.replace(old,new,1)
+          old="l.w=clamp(ow+d.x,5,100-l.x);l.h=clamp(oh+d.y,5,100-l.y)"
+          new="l.w=clamp(ow+d.x,5,150);l.h=clamp(oh+d.y,5,150)"
+          if old not in s: raise SystemExit('resize clamp marker missing')
+          s=s.replace(old,new,1)
+          s=s.replace('id="layerX" type="number" min="0" max="100"','id="layerX" type="number" min="-25" max="125"',1)
+          s=s.replace('id="layerY" type="number" min="0" max="100"','id="layerY" type="number" min="-25" max="125"',1)
+          s=s.replace('id="layerW" type="number" min="5" max="100"','id="layerW" type="number" min="5" max="150"',1)
+          s=s.replace('id="layerH" type="number" min="5" max="100"','id="layerH" type="number" min="5" max="150"',1)
+          old="l.x=clamp(Number($('#layerX').value),0,100-l.w);l.y=clamp(Number($('#layerY').value),0,100-l.h);l.w=clamp(Number($('#layerW').value),5,100-l.x);l.h=clamp(Number($('#layerH').value),5,100-l.y)"
+          new="l.x=clamp(Number($('#layerX').value),-25,125);l.y=clamp(Number($('#layerY').value),-25,125);l.w=clamp(Number($('#layerW').value),5,150);l.h=clamp(Number($('#layerH').value),5,150)"
+          if old not in s: raise SystemExit('inspector geometry marker missing')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          b=Path('boot.js'); x=b.read_text().replace('takeover-v3.css?v=12','takeover-v3.css?v=13').replace('takeover-v3.js?v=12','takeover-v3.js?v=13'); b.write_text(x)
+          i=Path('index.html'); x=i.read_text().replace('boot.js?v=8','boot.js?v=9'); i.write_text(x)
+          PY
+      - name: Verify
+        run: |
+          node --check takeover-v3.js
+          grep -q "x:clamp(l.x,-25,125)" takeover-v3.js
+          grep -q 'id="layerX" type="number" min="-25" max="125"' takeover-v3.js
+          grep -q 'takeover-v3.js?v=13' boot.js
+          grep -q 'takeover-v3.css?v=13' boot.js
+          grep -q 'boot.js?v=9' index.html
+      - name: Commit
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js boot.js index.html
+          git commit -m "Preserve canvas bleed and exact publish geometry"
+          git push
