@@ -42,8 +42,7 @@ jobs:
           w.eval(fs.readFileSync('takeover-v3.js','utf8'));
           setTimeout(()=>{
             w.document.querySelector('#introGotIt')?.click();
-            const cells=[...w.document.querySelectorAll('.available-cell')];
-            cells[2].click(); // spot 3
+            [...w.document.querySelectorAll('.available-cell')][2].click(); // spot 3
             w.document.querySelector('#companyName').value='Shape Co';
             w.document.querySelector('#companyWebsite').value='shape.test';
             w.document.querySelector('#openPurchaseCanvas').click();
@@ -52,10 +51,8 @@ jobs:
             if(!multi.hidden)throw Error('Single spot should hide multi display');
             if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Single spot canvas not square: '+stage.style.aspectRatio);
             w.document.querySelector('#canvasClose').click();
-            const minis=[...w.document.querySelectorAll('.mini-spot')];
-            minis[6].click(); // 7
-            minis[10].click(); // 11
-            minis[11].click(); // 12 => 3,7,11,12
+            const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
+            clickMini(7);clickMini(11);clickMini(12); // 3,7,11,12
             w.document.querySelector('#openPurchaseCanvas').click();
             if(multi.hidden)throw Error('Multi display should show for 4 spots');
             if(stage.style.aspectRatio!=='2 / 3'&&stage.style.aspectRatio!=='2/3')throw Error('Combined shape ratio wrong: '+stage.style.aspectRatio);
