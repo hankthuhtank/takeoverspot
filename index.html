@@ -18,7 +18,7 @@
   <div class="spot-actions" id="spotActions"></div>
   <div class="takeover-reveal-stage" id="takeoverRevealStage" hidden></div>
   <div class="chrome">
-    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>4-HOUR SOCIAL SNAPSHOTS</strong><em>X · INSTAGRAM</em></div></div>
+    <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>DAILY SNAPSHOT · 12 PM CT</strong><em>X · INSTAGRAM</em></div></div>
     <div class="controls">
       <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
       <span class="chrome-btn primary" id="shieldFlag" hidden>FULL TAKEOVER PROTECTED</span>
@@ -59,10 +59,10 @@
     <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 16</button></div>
     <div class="mini-grid" id="miniGrid"></div>
     <div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>
-    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">Use a logo as a starting point, then build the actual placement in SPOT CANVAS.</p></div>
+    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>UPLOAD LOGO · OPTIONAL</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">Preview it here, then place and resize it however you want in SPOT CANVAS.</p></div>
     <div class="bid-list" id="bidRows"></div>
     <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
-    <div id="signinGate"><p class="hint">No passwords. Sign in with a one-click email link, then Stripe handles the payment.</p><button class="action" id="continueSignin">SIGN IN TO CONTINUE</button></div>
+    <div id="signinGate"><p class="hint"><strong>Design first.</strong> We only ask for your email when you are ready to continue to payment.</p><button class="action" id="continueSignin">CONTINUE TO PAYMENT</button></div>
     <div id="signedAs" class="hint" hidden></div>
     <button class="action" id="checkoutBtn" hidden>PAY & TAKE OVER</button>
     <p class="hint">A full 16-spot purchase gets 24 hours of exclusive protection. If the board changes while you are in Checkout, a stale purchase is rejected and automatically refunded instead of overwriting valid territory.</p>
@@ -100,10 +100,11 @@
       <div class="rule"><b>Your territory is your canvas.</b><span>Customize each territory independently with safe structured design controls. No custom HTML or scripts.</span></div>
       <div class="rule"><b>Own all sixteen. Own the page.</b><span>Buying all sixteen gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
     </div>
-    <p class="rules-copy"><strong>The Center Four are Spots 06, 07, 10 and 11.</strong> Together they form a perfect square in the middle of the 4×4 board. They are not artificially repriced; advertisers decide what that location is worth.</p>
-    <p class="rules-copy"><strong>Payments are purchases of advertising placement, not refundable deposits.</strong> If the board changes while Stripe Checkout is still open and your payment can no longer claim the quoted territory, TAKEOVER automatically refunds that stale transaction.</p>
-    <p class="rules-copy"><strong>Advertiser content is third-party content.</strong> Advertisers are responsible for their claims, offers, products, services, images, trademarks, and destination websites. TAKEOVER may remove reported or risky content but does not endorse it.</p>
-    <p class="rules-copy"><strong>Moderation is intentionally rare.</strong> Weird, ugly, provocative, annoying, competitive, or unpopular ads are not the problem. Owner resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation or rights abuse, credible safety/legal risk, or a comparably extreme issue.</p>
+    <div class="rules-fineprint">
+      <p class="rules-copy"><strong>Payments.</strong> You are buying advertising placement, not a deposit. If the board changes during Checkout and your purchase can no longer be applied, it is automatically refunded.</p>
+      <p class="rules-copy"><strong>Advertiser responsibility.</strong> Advertisers are responsible for what they publish. TAKEOVER does not endorse third-party ads.</p>
+      <p class="rules-copy"><strong>Moderation.</strong> TAKEOVER is intentionally permissive. Ugly, weird, provocative, annoying, competitive or unpopular is allowed. Resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation/rights abuse, or comparable extreme risk.</p>
+    </div>
     <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="copyright.html" target="_blank">COPYRIGHT</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
 </section>
