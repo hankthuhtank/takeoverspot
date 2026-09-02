@@ -20,13 +20,16 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=7' boot.js
-          grep -q 'takeover-v3.css?v=7' boot.js
+          grep -q 'takeover-v3.js?v=11' boot.js
+          grep -q 'takeover-v3.css?v=11' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
           grep -q 'id=\"canvasCompany\"' takeover-v3.js
           grep -q 'id=\"canvasWebsite\"' takeover-v3.js
           grep -q 'CANVAS_PRESETS' takeover-v3.js
           grep -q 'storeLocalAsset' takeover-v3.js
+          grep -q 'prepareImageFile' takeover-v3.js
+          grep -q 'IMAGE_INPUT_LIMIT=25' takeover-v3.js
+          grep -q 'TAKEOVER V11 - mobile board geometry' takeover-v3.css
           grep -q 'normalizeImgRef' takeover-v3.js
           grep -q 'materializeCanvasAssets' takeover-v3.js
           grep -q 'logo-trigger' takeover-v3.js
@@ -41,12 +44,13 @@ jobs:
           grep -q "takeover-launch-health" takeover-v3.js
           grep -q 'id="refundModal"' index.html
           grep -q 'id="adminHealth"' index.html
+          if grep -q 'Logo is too large (2 MB max)' takeover-v3.js; then exit 1; fi
           if grep -q 'CENTER=' takeover-v3.js; then exit 1; fi
           if grep -q 'isCenterSelection' takeover-v3.js; then exit 1; fi
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
-      - name: 16-cell board and Canvas V7 flows
+      - name: 16-cell board and Canvas V11 flows
         run: |
           cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
@@ -82,6 +86,7 @@ jobs:
             if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Single spot should be square');
             const logoTrigger=w.document.querySelector('#logoPreview .logo-trigger');
             if(!logoTrigger||logoTrigger.htmlFor!=='logoFile')throw Error('Whole-box logo target missing');
+            if(w.document.querySelector('#logoFile')?.getAttribute('accept')!=='image/*')throw Error('Logo picker should accept browser-supported images');
             w.document.querySelector('#canvasClose').click();
 
             const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
@@ -114,7 +119,7 @@ jobs:
             if(!text)throw Error('Text editor missing');
             text.value='HELLO WORLD';text.dispatchEvent(new w.Event('input',{bubbles:true}));
             if(w.document.querySelector('#layerText')!==text)throw Error('Text editor was recreated during typing');
-            console.log('PASS TAKEOVER CANVAS V7');process.exit(0);
+            console.log('PASS TAKEOVER CANVAS V11');process.exit(0);
           },450);
           JS
           timeout 12s node v3.cjs
