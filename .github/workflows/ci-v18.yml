@@ -83,5 +83,6 @@ jobs:
           ! grep -qi 'season' payments.html
           ! grep -qi 'archive' privacy.html
           grep -q 'Placement has no guaranteed minimum duration or cash value.' boot.js
-          ! grep -qi 'Future seasons' boot.js
+          ! grep -q 'Any future voluntary season ending requires' boot.js
+          ! grep -q 'No season end is currently scheduled' boot.js
           echo 'PASS LEGAL COPY CONTRACT'
