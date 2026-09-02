@@ -1,0 +1,72 @@
+name: TAKEOVER Frontend Smoke Test
+'on':
+  push:
+    branches: [main]
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','.github/workflows/ci-v17.yml']
+  pull_request:
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          node --check contact.js
+      - name: V17 architecture
+        run: |
+          grep -q 'const TOTAL=16' takeover-v3.js
+          grep -q 'takeover-v3.js?v=17' boot.js
+          grep -q 'takeover-v3.css?v=17' boot.js
+          grep -q 'boot.js?v=13' index.html
+          grep -q 'frameCells' takeover-v3.js
+          grep -q 'ensureFrameClip' takeover-v3.js
+          grep -q 'startLayerTouch' takeover-v3.js
+          grep -q 'BroadcastChannel' takeover-v3.js
+          grep -q 'raw=await f.arrayBuffer' takeover-v3.js
+          grep -q "const f=\$('#logoFile')?.files?.\[0\]" takeover-v3.js
+          grep -q "case'glitch'" takeover-v3.js
+          grep -q "case'chaos'" takeover-v3.js
+          grep -q "case'hyper'" takeover-v3.js
+          grep -q "case'confetti'" takeover-v3.js
+          grep -q "motion-bounce" takeover-v3.css
+          grep -q "motion-shake" takeover-v3.css
+          grep -q "canvas-work{display:contents" takeover-v3.css
+          grep -q "LIVE PREVIEW STAYS ON SCREEN" takeover-v3.js
+          grep -q 'object-fit:contain!important' takeover-v3.css
+          if grep -q 'Logo is too large (2 MB max)' takeover-v3.js; then exit 1; fi
+      - name: Dead-pixel contract
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("canvas.frameCells?.length?[{...selectionShape(frame),cells:nums,clip:ensureFrameClip(nums,frame)}]")) throw Error('Combined creatives no longer anchor to original footprint');
+          if(!s.includes("currentCanvas.frameCells=[...new Set(selected.map(Number)")) throw Error('Checkout no longer stores original footprint');
+          console.log('PASS V17 DEAD-PIXEL CONTRACT');
+          JS
+      - name: Mobile upload regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          const f=s.indexOf("const f=$('#logoFile')?.files?.[0]");
+          const local=s.indexOf("startsWith(LOCAL_ASSET_PREFIX)",f);
+          if(f<0||local<f) throw Error('Checkout no longer prefers the original mobile logo file');
+          if(!s.includes('raw=await f.arrayBuffer()')) throw Error('Storage upload is no longer byte-buffer hardened');
+          console.log('PASS V17 MOBILE UPLOAD CONTRACT');
+          JS
+      - name: One-dollar start regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
+          console.log('PASS V17 $1 CONFIG CONTRACT');
+          JS
