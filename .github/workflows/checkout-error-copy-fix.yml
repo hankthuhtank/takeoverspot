@@ -1,0 +1,34 @@
+name: TAKEOVER Checkout Error Reporting Fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/checkout-error-copy-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Improve checkout error reporting
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('takeover-v3.js')
+          s=p.read_text()
+          old="if(error||data?.error)throw new Error(data?.error||error?.message||'Checkout failed');saveDraft();location.href=data.url"
+          new="if(error||data?.error){let msg=data?.error||error?.message||'Checkout failed';if(error?.context?.json)try{const detail=await error.context.json();if(detail?.error)msg=detail.error}catch{}throw new Error(msg)}saveDraft();location.href=data.url"
+          if old not in s: raise SystemExit('checkout error block not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Verify
+        run: |
+          node --check takeover-v3.js
+          grep -q "error?.context?.json" takeover-v3.js
+      - name: Commit
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js
+          git commit -m "Show useful checkout errors"
+          git push
