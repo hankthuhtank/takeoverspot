@@ -2,7 +2,7 @@ name: TAKEOVER Canvas V6
 on:
   push:
     branches: [main]
-    paths: ['tools/canvas_v6_patch.py']
+    paths: ['tools/canvas_v6_patch.py', '.github/workflows/canvas-v6.yml']
 permissions:
   contents: write
 jobs:
@@ -42,7 +42,7 @@ jobs:
           w.eval(fs.readFileSync('takeover-v3.js','utf8'));
           setTimeout(()=>{
             w.document.querySelector('#introGotIt')?.click();
-            [...w.document.querySelectorAll('.available-cell')][2].click(); // spot 3
+            [...w.document.querySelectorAll('.available-cell')][2].click();
             w.document.querySelector('#companyName').value='Shape Co';
             w.document.querySelector('#companyWebsite').value='shape.test';
             w.document.querySelector('#openPurchaseCanvas').click();
@@ -52,7 +52,7 @@ jobs:
             if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Single spot canvas not square: '+stage.style.aspectRatio);
             w.document.querySelector('#canvasClose').click();
             const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
-            clickMini(7);clickMini(11);clickMini(12); // 3,7,11,12
+            clickMini(7);clickMini(11);clickMini(12);
             w.document.querySelector('#openPurchaseCanvas').click();
             if(multi.hidden)throw Error('Multi display should show for 4 spots');
             if(stage.style.aspectRatio!=='2 / 3'&&stage.style.aspectRatio!=='2/3')throw Error('Combined shape ratio wrong: '+stage.style.aspectRatio);
