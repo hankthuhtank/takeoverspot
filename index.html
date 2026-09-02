@@ -7,7 +7,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#f7f7f3">
 <title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
-<meta name="description" content="Buy part of the webpage. Make it yours. Keep it until somebody pays more.">
+<meta name="description" content="Claim part of the webpage. Make it yours. Keep it until somebody pays more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=Manrope:wght@500;600;700;800&family=Orbitron:wght@400;600;800&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@
   <div class="panel-inner">
     <div class="intro-kicker">WELCOME TO TAKEOVER</div>
     <h1 class="intro-title">This webpage belongs to<br><em>whoever wants it most.</em></h1>
-    <p class="intro-copy">Pick a spot. Pay more than its current owner. Design the territory yourself. Own touching spots to build something larger. Own all sixteen and you own the page.</p>
+    <p class="intro-copy">Pick a spot. Pay more than its current owner. Put a brand, project, alias, artwork or message on it. Own touching spots to build something larger. Own all sixteen and you own the page.</p>
     <div class="rules-list">
       <div class="rule"><b>1 · Pay more and it becomes yours.</b><span>Available spots start at the listed price. Occupied spots can be taken for the displayed increase.</span></div>
       <div class="rule"><b>2 · Keep it until somebody takes it.</b><span>No daily reset. No countdown. Ownership continues until somebody takes it or another applicable Term ends it.</span></div>
@@ -58,9 +58,9 @@
 <section class="panel modal" id="takeoverModal">
   <div class="panel-inner">
     <div class="panel-head"><div><span id="takeoverKicker">TAKEOVER</span><h2 id="takeoverTitle">Take a spot.</h2></div><button class="close" data-close>×</button></div>
-    <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 16</button></div>
+    <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your canvas larger.</small></div><button class="tiny" id="selectAllBtn">ALL 16</button></div>
     <div class="mini-grid" id="miniGrid"></div>
-    <div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>
+    <div class="form-grid two"><div class="field"><label>NAME / BRAND</label><input id="companyName" maxlength="80" placeholder="Your name, brand or alias"></div><div class="field"><label>LINK · OPTIONAL</label><input id="companyWebsite" maxlength="300" placeholder="Website, social profile, or leave blank"></div></div>
     <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>CLICK TO CHOOSE LOGO</span><input id="logoFile" type="file" accept="image/*"></div><p class="hint">Preview it here, then place and resize it however you want in SPOT CANVAS.</p></div>
     <div class="bid-list" id="bidRows"></div>
     <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
@@ -101,14 +101,14 @@
     <p class="rules-copy"><strong>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</strong></p>
     <div class="rules-list">
       <div class="rule"><b>Pay more. Take the spot.</b><span>The current required takeover price is always shown before payment.</span></div>
-      <div class="rule"><b>Keep it until you are outbid.</b><span>No daily timer. Another advertiser can take it by paying the valid takeover price.</span></div>
+      <div class="rule"><b>Keep it until you are outbid.</b><span>No daily timer. Someone else can take it by paying the valid takeover price.</span></div>
       <div class="rule"><b>Your territory is your canvas.</b><span>Customize each territory independently with safe structured design controls. No custom HTML or scripts.</span></div>
       <div class="rule"><b>Own all sixteen. Own the page.</b><span>Buying all sixteen gives 24 hours of protected full-page control. After that, a competitor can break it by taking any individual spot for more.</span></div>
     </div>
     <div class="rules-fineprint">
-      <p class="rules-copy"><strong>Payments.</strong> You are buying advertising placement, not a deposit or stored value. If the board changes during Checkout and your purchase can no longer be applied, it is automatically refunded.</p>
-      <p class="rules-copy"><strong>Advertiser responsibility.</strong> Advertisers are responsible for what they publish. TAKEOVER does not endorse third-party ads.</p>
-      <p class="rules-copy"><strong>Moderation.</strong> TAKEOVER is intentionally permissive. Ugly, weird, provocative, annoying, competitive or unpopular is allowed. Resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation/rights abuse, or comparable extreme risk.</p>
+      <p class="rules-copy"><strong>Payments.</strong> You are buying digital placement, not a deposit or stored value. If the board changes during Checkout and your purchase can no longer be applied, it is automatically refunded.</p>
+      <p class="rules-copy"><strong>Owner responsibility.</strong> Territory owners are responsible for what they publish. TAKEOVER does not endorse user-created content.</p>
+      <p class="rules-copy"><strong>Moderation.</strong> TAKEOVER is intentionally permissive. Ugly, weird, provocative, annoying, competitive or unpopular is allowed. Resets are reserved for explicit nudity or graphic sexual content, serious fraud, malware/phishing, illegal or dangerous activity, impersonation/rights abuse, or comparable extreme risk.</p>
     </div>
     <div class="legal-links"><a href="terms.html" target="_blank">TERMS</a><a href="privacy.html" target="_blank">PRIVACY</a><a href="auction-rules.html" target="_blank">FULL RULES</a><a href="payments.html" target="_blank">PAYMENTS</a><a href="content-policy.html" target="_blank">AD POLICY</a><a href="copyright.html" target="_blank">COPYRIGHT</a><a href="contact.html" target="_blank">REPORT / CONTACT</a></div>
   </div>
@@ -146,7 +146,7 @@
       </section>
 
       <section class="admin-pane" data-admin-pane="accounts">
-        <div class="admin-block"><div class="admin-block-head admin-search-head"><div><b>ACCOUNTS</b><span>Search customers and see ownership/purchase history.</span></div><input id="adminAccountSearch" type="search" placeholder="Search email or company"></div><div id="adminAccounts"><div class="empty">Loading accounts…</div></div></div>
+        <div class="admin-block"><div class="admin-block-head admin-search-head"><div><b>ACCOUNTS</b><span>Search customers and see ownership/purchase history.</span></div><input id="adminAccountSearch" type="search" placeholder="Search email or name / brand"></div><div id="adminAccounts"><div class="empty">Loading accounts…</div></div></div>
       </section>
 
       <section class="admin-pane" data-admin-pane="support">
