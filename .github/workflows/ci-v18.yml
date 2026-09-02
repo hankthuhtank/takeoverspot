@@ -1,4 +1,4 @@
-name: TAKEOVER V22.2 Smoke Test
+name: TAKEOVER V22.3 Smoke Test
 'on':
   push:
     branches: [main]
@@ -20,11 +20,11 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V22.2 architecture
+      - name: V22.3 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=22.2' boot.js
-          grep -q 'takeover-v3.css?v=22.2' boot.js
+          grep -q 'takeover-v3.js?v=22.3' boot.js
+          grep -q 'takeover-v3.css?v=22.3' boot.js
           grep -q 'boot.js?v=18' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
@@ -33,6 +33,7 @@ jobs:
           grep -q 'TAKEOVER V22 DESKTOP READABILITY' takeover-v3.css
           grep -q 'TAKEOVER V22.1 DESKTOP TYPE COMPLETION' takeover-v3.css
           grep -q 'TAKEOVER V22.2' takeover-v3.css
+          grep -q 'TAKEOVER V22.3' takeover-v3.css
       - name: Core product contracts
         run: |
           grep -q 'frameCells' takeover-v3.js
@@ -55,11 +56,20 @@ jobs:
           grep -q 'LIVE PREVIEW · EXACT BOARD RENDER' takeover-v3.js
           grep -q 'canvas-stage.is-preview .editor-grid' takeover-v3.css
           grep -q 'canvas-stage .canvas-preview-live .canvas-layer' takeover-v3.css
+      - name: Spot control containment regression
+        run: |
+          grep -q 'spot-history-preview{position:relative' takeover-v3.css
+          grep -q 'spot-history-preview>.canvas-creative' takeover-v3.css
+          grep -q 'RESTORE THIS STATE' takeover-v3.js
+          grep -q 'VACATE · KEEP PRICE' takeover-v3.js
       - name: Refund safety regression
         run: |
           grep -q 'refundTerritoryAction' index.html
           grep -q 'value="restore_previous"' index.html
           grep -q 'value="vacate_keep_price"' index.html
+          grep -q 'syncRefundTerritoryAction' takeover-v3.js
+          grep -q "kind==='takeover'?'restore_previous':'none'" takeover-v3.js
+          grep -q 'Partial refunds leave territory unchanged' takeover-v3.js
           grep -q 'territory_action:territoryAction' takeover-v3.js
           ! grep -q 'refundResetTerritory' index.html
           ! grep -q 'refundResetTerritory' takeover-v3.js
