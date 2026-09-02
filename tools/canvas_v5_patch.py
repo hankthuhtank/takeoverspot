@@ -31,12 +31,12 @@ js = js.replace("clamp(l.size||18,8,42)}px", "clamp(l.size||18,8,200)}px")
 if js.count("clamp(l.size||18,8,200)}px") < 2:
     raise SystemExit('editor size clamps were not updated')
 
-old_select = '<select id=\\"layerFont\\"><option value=\\"clean\\">Clean</option><option value=\\"heavy\\">Heavy</option><option value=\\"mono\\">Mono</option><option value=\\"editorial\\">Editorial</option></select>'
-new_select = '<select id=\\"layerFont\\"><option value=\\"clean\\">Clean · Manrope</option><option value=\\"heavy\\">Heavy · Manrope</option><option value=\\"modern\\">Modern · Space Grotesk</option><option value=\\"condensed\\">Condensed · Oswald</option><option value=\\"display\\">Display · Bebas Neue</option><option value=\\"editorial\\">Editorial · Playfair</option><option value=\\"serif\\">Classic Serif · Baskerville</option><option value=\\"mono\\">Mono · DM Mono</option><option value=\\"tech\\">Tech · Orbitron</option><option value=\\"script\\">Script · Pacifico</option></select>'
+old_select = r'<select id="layerFont"><option value="clean">Clean</option><option value="heavy">Heavy</option><option value="mono">Mono</option><option value="editorial">Editorial</option></select>'
+new_select = r'<select id="layerFont"><option value="clean">Clean · Manrope</option><option value="heavy">Heavy · Manrope</option><option value="modern">Modern · Space Grotesk</option><option value="condensed">Condensed · Oswald</option><option value="display">Display · Bebas Neue</option><option value="editorial">Editorial · Playfair</option><option value="serif">Classic Serif · Baskerville</option><option value="mono">Mono · DM Mono</option><option value="tech">Tech · Orbitron</option><option value="script">Script · Pacifico</option></select>'
 js = rep(js, old_select, new_select, 'font selector')
 
-old_size = '<input id=\\"layerSize\\" type=\\"range\\" min=\\"8\\" max=\\"42\\" value=\\"${l.size||18}\\">'
-new_size = '<input id=\\"layerSize\\" type=\\"range\\" min=\\"8\\" max=\\"200\\" value=\\"${l.size||18}\\"><output id=\\"layerSizeValue\\" class=\\"size-readout\\">${l.size||18}px</output>'
+old_size = r'<input id="layerSize" type="range" min="8" max="42" value="${l.size||18}">'
+new_size = r'<input id="layerSize" type="range" min="8" max="200" value="${l.size||18}"><output id="layerSizeValue" class="size-readout">${l.size||18}px</output>'
 js = rep(js, old_size, new_size, 'size slider')
 
 js = rep(js,
@@ -86,5 +86,3 @@ css_path.write_text(css)
 index_path.write_text(index)
 boot_path.write_text(boot)
 print('TAKEOVER Canvas V5 patch applied')
-
-# trigger after workflow exists
