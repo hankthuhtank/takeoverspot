@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#f7f7f3">
 <title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
@@ -193,19 +193,19 @@
 <section class="panel modal moderation-modal" id="refundModal">
   <div class="panel-inner">
     <div class="panel-head"><div><span>OWNER REFUND</span><h2 id="refundTitle">Refund a purchase.</h2></div><button class="close" data-close>×</button></div>
-    <div class="moderation-policy"><b>MONEY MOVES THROUGH STRIPE.</b><p>Issue a full or partial refund here. Refunding money does not remove an ad unless you explicitly choose to reset territory too.</p></div>
+    <div class="moderation-policy"><b>MONEY MOVES THROUGH STRIPE.</b><p>Issue a full or partial refund here. Money and territory are separate: a refund does not change the board unless you deliberately choose a safe territory action below.</p></div>
     <div class="field"><label>REFUND AMOUNT</label><input id="refundAmount" type="number" min="0.01" step="0.01"></div>
     <div class="field"><label>REASON</label><select id="refundReason"><option value="">Choose a reason</option><option value="customer_request">Customer request</option><option value="duplicate">Duplicate charge</option><option value="fraud_suspected">Fraud suspected</option><option value="service_issue">TAKEOVER service issue</option><option value="goodwill">Goodwill / courtesy</option><option value="other">Other</option></select></div>
     <div class="field"><label>PRIVATE NOTE · OPTIONAL</label><textarea id="refundNote" maxlength="500" placeholder="Internal note. Required if you choose Other."></textarea></div>
-    <label class="toggle"><input id="refundResetTerritory" type="checkbox"> Also return any spots still tied to this exact purchase to AVAILABLE</label>
-    <p class="hint" id="refundHint">Only spots still owned from this exact payment can be reset. Later purchases are never touched.</p>
+    <div class="field"><label>TERRITORY AFTER A FULL REFUND</label><select id="refundTerritoryAction"><option value="none">REFUND ONLY · LEAVE TERRITORY AS-IS</option><option value="restore_previous">RESTORE PREVIOUS OWNER / STATE</option><option value="vacate_keep_price">VACATE · KEEP CURRENT MARKET PRICE</option></select></div>
+    <p class="hint" id="refundHint">Territory actions require the full remaining refund and affect only spots still tied to this exact payment. Refunds can no longer reset a spot to $1 from this screen.</p>
     <button class="action danger" id="confirmRefund">ISSUE REFUND</button>
     <button class="secondary" id="refundCancel">CANCEL</button>
   </div>
 </section>
 
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="boot.js?v=17"></script>
+<script src="vendor/supabase-2.112.4.min.js"></script>
+<script src="boot.js?v=18"></script>
 </body>
 </html>
