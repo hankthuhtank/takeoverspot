@@ -2,9 +2,9 @@ name: TAKEOVER Frontend Smoke Test
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html']
 permissions:
   contents: read
 jobs:
@@ -44,7 +44,7 @@ jobs:
           const s=fs.readFileSync('takeover-v3.js','utf8');
           if(!s.includes("os:Number(l.size||18)")) throw Error('pinch no longer captures starting font size');
           if(!s.includes("layer.size=clamp(editorTouchGesture.os*scale,8,96)")) throw Error('pinch no longer scales actual typography');
-          if(!s.includes('max=\"96\" step=\"1\"')) throw Error('text size slider became too coarse again');
+          if(!s.includes('max="96" step="1"')) throw Error('text size slider became too coarse again');
           if(!s.includes('layerSizeDown')||!s.includes('layerSizeUp')) throw Error('fine size buttons missing');
           console.log('PASS V18 TYPOGRAPHY');
           JS
@@ -75,3 +75,13 @@ jobs:
           if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
           console.log('PASS V18 $1 CONFIG');
           JS
+      - name: Legal copy contract
+        run: |
+          grep -q 'THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.' auction-rules.html
+          grep -qi 'Future seasons and historical archives' terms.html
+          ! grep -qi 'season' auction-rules.html
+          ! grep -qi 'season' payments.html
+          ! grep -qi 'archive' privacy.html
+          grep -q 'Placement has no guaranteed minimum duration or cash value.' boot.js
+          ! grep -qi 'Future seasons' boot.js
+          echo 'PASS LEGAL COPY CONTRACT'
