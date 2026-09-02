@@ -1,0 +1,57 @@
+name: TAKEOVER Frontend Smoke Test
+'on':
+  push:
+    branches: [main]
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','.github/workflows/ci-v15.yml']
+  pull_request:
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          node --check contact.js
+      - name: V15 architecture
+        run: |
+          grep -q 'const TOTAL=16' takeover-v3.js
+          grep -q 'starting_price:10' takeover-v3.js
+          grep -q 'Math.max(1,Math.trunc' takeover-v3.js
+          grep -q "storage_retention_days" takeover-v3.js
+          grep -q 'takeover-v3.js?v=15' boot.js
+          grep -q 'takeover-v3.css?v=15' boot.js
+          grep -q 'boot.js?v=11' index.html
+          grep -q 'TAKEOVER V15' takeover-v3.css
+          grep -q 'object-fit:contain!important' takeover-v3.css
+          grep -q 'admin-top h2{font-size:44px' takeover-v3.css
+          grep -q 'data-admin-tab="support"' index.html
+          grep -q 'data-admin-tab="storage"' index.html
+          grep -q 'data-admin-tab="security"' index.html
+          grep -q 'takeover-support' contact.js
+          grep -q 'prepareImageFile' takeover-v3.js
+          grep -q "x:clamp(l.x,-25,125)" takeover-v3.js
+          grep -q "case'neon'" takeover-v3.js
+          grep -q "case'aurora'" takeover-v3.js
+          grep -q 'motion-float' takeover-v3.css
+          grep -q 'prefers-reduced-motion' takeover-v3.css
+          if grep -q 'Logo is too large (2 MB max)' takeover-v3.js; then exit 1; fi
+          if grep -q 'CENTER=' takeover-v3.js; then exit 1; fi
+          if grep -q 'launch.js' boot.js; then exit 1; fi
+          if grep -q 'polish.js' boot.js; then exit 1; fi
+      - name: One-dollar start regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
+          if(!s.includes(".select('starting_price,min_increment,purchases_enabled,page_shield_until,storage_retention_days')")) throw Error('Config load fields changed unexpectedly');
+          console.log('PASS V15 $1 CONFIG CONTRACT');
+          JS
