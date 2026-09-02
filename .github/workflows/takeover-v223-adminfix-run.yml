@@ -1,0 +1,38 @@
+name: TAKEOVER V22.3 Admin Fix
+'on':
+  push:
+    branches: [main]
+    paths: ['.takeover-v223-adminfix.py','.github/workflows/takeover-v223-adminfix-run.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply V22.3 patch
+        run: python .takeover-v223-adminfix.py
+      - name: Verify
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q 'syncRefundTerritoryAction' takeover-v3.js
+          grep -q "kind==='takeover'?'restore_previous':'none'" takeover-v3.js
+          grep -q 'Partial refunds leave territory unchanged' takeover-v3.js
+          grep -q 'TAKEOVER V22.3' takeover-v3.css
+          grep -q 'spot-history-preview{position:relative' takeover-v3.css
+          grep -q 'takeover-v3.js?v=22.3' boot.js
+          grep -q 'takeover-v3.css?v=22.3' boot.js
+      - name: Commit
+        run: |
+          git config user.name takeover-bot
+          git config user.email takeover-bot@users.noreply.github.com
+          git add takeover-v3.js takeover-v3.css boot.js index.html
+          git commit -m 'TAKEOVER V22.3 fix spot control and refund defaults' || exit 0
+          git push
