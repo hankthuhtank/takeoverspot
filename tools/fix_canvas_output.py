@@ -17,4 +17,4 @@ fixes=[
 ]
 for old,new in fixes:s=s.replace(old,new)
 p.write_text(s)
-print('canvas output boundaries fixed')
+print('canvas output boundaries fixed v2')
