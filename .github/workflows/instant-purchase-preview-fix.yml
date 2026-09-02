@@ -1,0 +1,73 @@
+name: TAKEOVER Instant Purchase Preview Fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/instant-purchase-preview-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add instant post-checkout preview
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('takeover-v3.js')
+          s=p.read_text()
+
+          marker="let editorCanvas=null,editorCreativeId=null,editorContext='purchase',editorSelected=null,editorCompany='',editorWebsite='',moderationSpot=null,refundAttempt=null,lastImpressionKey='';"
+          repl=marker+"\nlet pendingReturnPreview=null;"
+          if marker not in s: raise SystemExit('state marker missing')
+          s=s.replace(marker,repl,1)
+
+          marker2="function renderBoard(){"
+          insert="""function setPendingReturnPreview(d){if(!d?.selected?.length)return;const nums=[...new Set(d.selected.map(Number).filter(n=>n>=1&&n<=TOTAL))].sort((a,b)=>a-b);if(!nums.length)return;pendingReturnPreview={nums,ad:{company_name:String(d.company||'YOUR BRAND'),website:normalizeWebsite(d.website||''),logo_url:d.logoUrl||null,canvas_json:normalizeCanvas(d.canvas,d.company,d.logoUrl)}};renderBoard()}\nfunction renderPendingReturnPreview(){if(!pendingReturnPreview)return;const terr=$('#territories');if(!terr)return;const {nums,ad}=pendingReturnPreview,c=normalizeCanvas(ad.canvas_json,ad.company_name,ad.logo_url),parts=c.display==='divided'?nums.map(n=>({r:Math.floor((n-1)/COLS),c:(n-1)%COLS,w:1,h:1,cells:[n],clip:''})):selectionComponents(nums).map(cells=>{const b=selectionShape(cells);return{...b,cells,clip:cells.length===b.w*b.h?'':ensureShapeClip(cells)}});parts.forEach(r=>{const t=document.createElement('div');t.className='territory pending-territory';t.style.left=(r.c/COLS*100)+'%';t.style.top=(r.r/ROWS*100)+'%';t.style.width=(r.w/COLS*100)+'%';t.style.height=(r.h/ROWS*100)+'%';t.style.clipPath=r.clip||'none';t.appendChild(buildCanvasCreative(ad,'',r.cells,false));const badge=document.createElement('span');badge.className='pending-territory-badge';badge.textContent='PUBLISHING…';t.appendChild(badge);terr.appendChild(t)})}\n\n"""
+          if marker2 not in s: raise SystemExit('renderBoard marker missing')
+          s=s.replace(marker2,insert+marker2,1)
+
+          old="terr.appendChild(t)});$('#board')?.classList.toggle('full-takeover'"
+          new="terr.appendChild(t)});renderPendingReturnPreview();$('#board')?.classList.toggle('full-takeover'"
+          if old not in s: raise SystemExit('renderBoard tail missing')
+          s=s.replace(old,new,1)
+
+          old2="if(state==='success'){toast('Payment received — claiming your territory…');if(session&&attempt)await pollAttempt(attempt)}"
+          new2="if(state==='success'){const d=readDraft();if(d)setPendingReturnPreview(d);toast('Payment received — publishing your territory…');if(session&&attempt)await pollAttempt(attempt)}"
+          if old2 not in s: raise SystemExit('handleReturn success block missing')
+          s=s.replace(old2,new2,1)
+
+          old3="if(data?.status==='won'){toast('You own it.');clearDraft();await refreshBoard();setTimeout(playReveal,450);return}if(data?.status==='refunded'){toast('The board changed during checkout. You were automatically refunded.');clearDraft();return}if(data?.status==='refund_failed'){toast('Payment needs review. No territory was assigned.');return}"
+          new3="if(data?.status==='won'){pendingReturnPreview=null;toast('You own it.');clearDraft();await refreshBoard();setTimeout(playReveal,450);return}if(data?.status==='refunded'){pendingReturnPreview=null;toast('The board changed during checkout. You were automatically refunded.');clearDraft();await refreshBoard();return}if(data?.status==='refund_failed'){pendingReturnPreview=null;toast('Payment needs review. No territory was assigned.');await refreshBoard();return}"
+          if old3 not in s: raise SystemExit('pollAttempt status block missing')
+          s=s.replace(old3,new3,1)
+          p.write_text(s)
+
+          c=Path('takeover-v3.css')
+          css=c.read_text()+"\n.pending-territory{z-index:9;pointer-events:none}.pending-territory .canvas-creative{opacity:1}.pending-territory-badge{position:absolute;right:8px;bottom:8px;z-index:5;padding:5px 7px;border-radius:999px;background:rgba(17,17,17,.88);color:#fff;font:700 9px/1 var(--mono,monospace);letter-spacing:.08em;box-shadow:0 2px 12px rgba(0,0,0,.16)}\n"
+          c.write_text(css)
+
+          b=Path('boot.js')
+          bs=b.read_text().replace('takeover-v3.css?v=8','takeover-v3.css?v=9').replace('takeover-v3.js?v=8','takeover-v3.js?v=9')
+          b.write_text(bs)
+
+          i=Path('index.html')
+          ix=i.read_text().replace('boot.js?v=4','boot.js?v=5')
+          i.write_text(ix)
+          PY
+      - name: Verify
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q "pendingReturnPreview" takeover-v3.js
+          grep -q "PUBLISHING…" takeover-v3.js
+          grep -q "publishing your territory" takeover-v3.js
+          grep -q "takeover-v3.js?v=9" boot.js
+          grep -q "boot.js?v=5" index.html
+      - name: Commit
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js takeover-v3.css boot.js index.html
+          git commit -m "Show purchased creative immediately after Stripe"
+          git push
