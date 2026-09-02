@@ -1,4 +1,4 @@
-name: TAKEOVER V22 Smoke Test
+name: TAKEOVER V22.2 Smoke Test
 'on':
   push:
     branches: [main]
@@ -20,11 +20,11 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V22 architecture
+      - name: V22.2 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=22' boot.js
-          grep -q 'takeover-v3.css?v=22.1' boot.js
+          grep -q 'takeover-v3.js?v=22.2' boot.js
+          grep -q 'takeover-v3.css?v=22.2' boot.js
           grep -q 'boot.js?v=18' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
@@ -32,6 +32,7 @@ jobs:
           grep -q 'window.self!==window.top' boot.js
           grep -q 'TAKEOVER V22 DESKTOP READABILITY' takeover-v3.css
           grep -q 'TAKEOVER V22.1 DESKTOP TYPE COMPLETION' takeover-v3.css
+          grep -q 'TAKEOVER V22.2' takeover-v3.css
       - name: Core product contracts
         run: |
           grep -q 'frameCells' takeover-v3.js
@@ -45,6 +46,15 @@ jobs:
           grep -q 'admin_set_takeover_spot_price' takeover-v3.js
           grep -q 'admin_vacate_takeover_spot' takeover-v3.js
           grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
+      - name: Canvas preview regression
+        run: |
+          grep -q 'toggleCanvasPreview' takeover-v3.js
+          grep -q 'editorPreviewMode' takeover-v3.js
+          grep -q 'canvas-preview-live' takeover-v3.js
+          grep -q "btn.textContent=editorPreviewMode?'EDIT':'PREVIEW'" takeover-v3.js
+          grep -q 'LIVE PREVIEW · EXACT BOARD RENDER' takeover-v3.js
+          grep -q 'canvas-stage.is-preview .editor-grid' takeover-v3.css
+          grep -q 'canvas-stage .canvas-preview-live .canvas-layer' takeover-v3.css
       - name: Refund safety regression
         run: |
           grep -q 'refundTerritoryAction' index.html
