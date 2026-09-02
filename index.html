@@ -59,7 +59,7 @@
     <div class="selector-title"><div><b>SELECT YOUR TERRITORY</b><small id="territoryHint">Add touching spots to make your ad larger.</small></div><button class="tiny" id="selectAllBtn">ALL 16</button></div>
     <div class="mini-grid" id="miniGrid"></div>
     <div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>
-    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>CLICK TO CHOOSE LOGO</span><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div><p class="hint">Preview it here, then place and resize it however you want in SPOT CANVAS.</p></div>
+    <div class="field"><label>LOGO · OPTIONAL</label><div class="logo-drop" id="logoPreview"><span>CLICK TO CHOOSE LOGO</span><input id="logoFile" type="file" accept="image/*"></div><p class="hint">Preview it here, then place and resize it however you want in SPOT CANVAS.</p></div>
     <div class="bid-list" id="bidRows"></div>
     <div class="summary"><span>YOU PAY NOW</span><b id="checkoutTotal">$0</b></div>
     <div id="signinGate"><p class="hint"><strong>Design first.</strong> We only ask for your email when you are ready to continue to payment.</p><button class="action" id="continueSignin">CONTINUE TO PAYMENT</button></div>
@@ -155,6 +155,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="boot.js?v=6"></script>
+<script src="boot.js?v=7"></script>
 </body>
 </html>
