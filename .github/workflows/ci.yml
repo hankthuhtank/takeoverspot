@@ -20,8 +20,8 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=4' boot.js
-          grep -q 'takeover-v3.css?v=4' boot.js
+          grep -q 'takeover-v3.js?v=6' boot.js
+          grep -q 'takeover-v3.css?v=6' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
           grep -q 'id=\"canvasCompany\"' takeover-v3.js
           grep -q 'id=\"canvasWebsite\"' takeover-v3.js
@@ -29,6 +29,12 @@ jobs:
           grep -q 'storeLocalAsset' takeover-v3.js
           grep -q 'normalizeImgRef' takeover-v3.js
           grep -q 'materializeCanvasAssets' takeover-v3.js
+          grep -q 'logo-trigger' takeover-v3.js
+          grep -q 'multiSpotSection' takeover-v3.js
+          grep -q 'selectionComponents' takeover-v3.js
+          grep -q 'ensureShapeClip' takeover-v3.js
+          grep -q 'syncEditorStageShape' takeover-v3.js
+          grep -q 'max=\"200\"' takeover-v3.js
           grep -q "takeover-admin-refund" takeover-v3.js
           grep -q "takeover-launch-health" takeover-v3.js
           grep -q 'id="refundModal"' index.html
@@ -38,7 +44,7 @@ jobs:
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
-      - name: 16-cell board and canvas flows
+      - name: 16-cell board and Canvas V6 flows
         run: |
           cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
@@ -62,15 +68,33 @@ jobs:
             if(page.textContent.trim()!=='TAKE THE PAGE · $160')throw Error('Wrong page total: '+page.textContent);
             const social=[...w.document.querySelectorAll('.social-pulse a')].map(a=>a.textContent).join('·');
             if(social!=='X·INSTAGRAM')throw Error('Social labels wrong: '+social);
-            cells[5].click();
-            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 6 did not open');
-            const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
-            clickMini(7);clickMini(10);clickMini(11);
-            if(!/4 connected spots/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Connected territory title wrong: '+w.document.querySelector('#takeoverTitle').textContent);
+
+            cells[2].click(); // spot 3 only
+            if(!w.document.querySelector('#takeoverModal').classList.contains('on'))throw Error('Spot 3 did not open');
             w.document.querySelector('#companyName').value='Example Co';
             w.document.querySelector('#companyWebsite').value='example.com';
             w.document.querySelector('#openPurchaseCanvas').click();
             if(!w.document.querySelector('#canvasModal').classList.contains('on'))throw Error('Canvas did not open');
+            const stage=w.document.querySelector('#canvasStage'),multi=w.document.querySelector('#multiSpotSection');
+            if(!multi.hidden)throw Error('Single spot should hide multi-spot controls');
+            if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Single spot should be square');
+            const logoTrigger=w.document.querySelector('#logoPreview .logo-trigger');
+            if(!logoTrigger||logoTrigger.htmlFor!=='logoFile')throw Error('Whole-box logo target missing');
+            w.document.querySelector('#canvasClose').click();
+
+            const clickMini=n=>[...w.document.querySelectorAll('.mini-spot')][n-1].click();
+            clickMini(7);clickMini(11);clickMini(12); // exact |_ shape: 3,7,11,12
+            if(!/4 connected spots/i.test(w.document.querySelector('#takeoverTitle').textContent))throw Error('Connected territory title wrong: '+w.document.querySelector('#takeoverTitle').textContent);
+            w.document.querySelector('#openPurchaseCanvas').click();
+            if(multi.hidden)throw Error('Multi-spot controls should show for multiple spots');
+            if(stage.style.aspectRatio!=='2 / 3'&&stage.style.aspectRatio!=='2/3')throw Error('Combined shape bounds wrong: '+stage.style.aspectRatio);
+            if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined |_ shape clip missing');
+            w.document.querySelector('#displayDivided').click();
+            if(stage.style.aspectRatio!=='1 / 1'&&stage.style.aspectRatio!=='1/1')throw Error('Divided design should use a single square');
+            if(stage.style.clipPath!=='none')throw Error('Divided design should not use combined clipping');
+            w.document.querySelector('#displayCombined').click();
+            if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined shape did not restore');
+
             if(w.document.querySelector('#canvasCompany').value!=='Example Co')throw Error('Canvas company did not load');
             if(!w.document.querySelector('#canvasWebsite').value.includes('example.com'))throw Error('Canvas website did not load');
             if(w.document.querySelectorAll('#canvasPresets .preset-card').length<10)throw Error('Preset library missing');
@@ -80,7 +104,7 @@ jobs:
             if(!text)throw Error('Text editor missing');
             text.value='HELLO WORLD';text.dispatchEvent(new w.Event('input',{bubbles:true}));
             if(w.document.querySelector('#layerText')!==text)throw Error('Text editor was recreated during typing');
-            console.log('PASS TAKEOVER CANVAS V4');process.exit(0);
+            console.log('PASS TAKEOVER CANVAS V6');process.exit(0);
           },450);
           JS
           timeout 12s node v3.cjs
