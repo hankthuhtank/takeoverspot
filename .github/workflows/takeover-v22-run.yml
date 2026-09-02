@@ -4,6 +4,7 @@ name: TAKEOVER V22 Apply
     branches: [main]
     paths:
       - '.takeover-v22-patch.py'
+      - '.takeover-v22-fix.py'
       - '.github/workflows/takeover-v22-run.yml'
 permissions:
   contents: write
@@ -21,7 +22,9 @@ jobs:
           curl -fsSL https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.min.js -o vendor/supabase-2.112.4.min.js
           test -s vendor/supabase-2.112.4.min.js
       - name: Apply V22 patch
-        run: python .takeover-v22-patch.py
+        run: |
+          python .takeover-v22-patch.py
+          python .takeover-v22-fix.py
       - name: Verify syntax and contracts
         run: |
           node --check takeover-v3.js
