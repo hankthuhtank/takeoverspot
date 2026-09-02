@@ -68,6 +68,7 @@ jobs:
         run: |
           git config user.name "TAKEOVER Builder"
           git config user.email "actions@users.noreply.github.com"
-          git add takeover-v3.js takeover-v3.css boot.js .github/workflows/ci.yml
+          git restore .github/workflows/ci.yml
+          git add takeover-v3.js takeover-v3.css boot.js
           git commit -m "Make canvas presets shape-aware and fix preview interaction"
           git push
