@@ -1,4 +1,0 @@
-  File "/tmp/v20.py", line 3
-    def load(p): return Path(p).read_text()
-IndentationError: unexpected indent
-exit=1
