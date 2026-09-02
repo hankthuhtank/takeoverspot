@@ -33,7 +33,7 @@
 </main>
 
 <footer class="site-legal" aria-label="Legal">
-  <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a>
+  <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a><a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X</a><a href="https://www.instagram.com/takeover.spot" target="_blank" rel="noopener">INSTAGRAM</a>
 </footer>
 
 <div class="scrim" id="scrim"></div>
@@ -110,22 +110,62 @@
   </div>
 </section>
 
-<aside class="panel drawer" id="adminPanel">
-  <div class="panel-inner">
-    <div class="panel-head"><div><span>OWNER ONLY</span><h2>TAKEOVER control.</h2></div><button class="close" data-close>×</button></div>
-    <label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
-    <div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div></div>
-    <button class="secondary" id="saveConfig">SAVE BOARD SETTINGS</button>
-    <div class="selector-title"><div><b>SYSTEM HEALTH</b><small>Owner-only launch checks. Green means no action needed.</small></div></div>
-    <div id="adminHealth"><div class="empty">Checking…</div></div>
-    <div class="selector-title"><div><b>LIVE BOARD</b><small>Emergency reset only. Taste, bad design, or ordinary controversy are not reset reasons.</small></div></div>
-    <div id="adminBoard"></div>
-    <div class="selector-title"><div><b>RECENT PURCHASES</b><small>Owner refund controls appear on completed payments.</small></div></div>
-    <div id="adminAttempts"></div>
-    <div class="selector-title"><div><b>MODERATION HISTORY</b><small>Private owner log of manual resets.</small></div></div>
-    <div id="adminModeration"></div>
+<section class="panel admin-console" id="adminPanel">
+  <div class="admin-shell">
+    <aside class="admin-nav">
+      <div class="admin-brand"><div><span>OWNER ONLY</span><b>TAKEOVER<br>CONTROL</b></div><button class="close" data-close>×</button></div>
+      <button class="admin-tab active" data-admin-tab="dashboard">DASHBOARD</button>
+      <button class="admin-tab" data-admin-tab="board">LIVE BOARD</button>
+      <button class="admin-tab" data-admin-tab="purchases">PURCHASES</button>
+      <button class="admin-tab" data-admin-tab="accounts">ACCOUNTS</button>
+      <button class="admin-tab" data-admin-tab="storage">STORAGE</button>
+      <button class="admin-tab" data-admin-tab="security">SECURITY</button>
+      <button class="admin-tab" data-admin-tab="settings">SETTINGS</button>
+      <button class="admin-tab" data-admin-tab="moderation">MODERATION / AUDIT</button>
+      <div class="admin-lock"><b>SERVER-LOCKED</b><span>Every admin request is re-authorized on the backend.</span></div>
+    </aside>
+    <main class="admin-main">
+      <div class="admin-top"><div><span id="adminSectionKicker">OWNER CONSOLE</span><h2 id="adminSectionTitle">Dashboard</h2></div><button class="admin-refresh" id="adminRefresh">REFRESH</button></div>
+
+      <section class="admin-pane active" data-admin-pane="dashboard">
+        <div class="admin-metrics" id="adminOverview"><div class="empty">Loading owner dashboard…</div></div>
+        <div class="admin-block"><div class="admin-block-head"><div><b>RECENT OWNER ACTIVITY</b><span>Maintenance and administrative actions.</span></div></div><div id="adminEvents"><div class="empty">No owner activity yet.</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="board">
+        <div class="admin-block"><div class="admin-block-head"><div><b>LIVE BOARD</b><span>All 16 spots. Emergency reset only.</span></div></div><div id="adminBoard"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="purchases">
+        <div class="admin-block"><div class="admin-block-head"><div><b>RECENT PURCHASES</b><span>Payment state, completed takeovers and refunds.</span></div></div><div id="adminAttempts"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="accounts">
+        <div class="admin-block"><div class="admin-block-head admin-search-head"><div><b>ACCOUNTS</b><span>Search customers and see ownership/purchase history.</span></div><input id="adminAccountSearch" type="search" placeholder="Search email or company"></div><div id="adminAccounts"><div class="empty">Loading accounts…</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="storage">
+        <div class="admin-block"><div class="admin-block-head"><div><b>CREATIVE STORAGE</b><span>Current ads and recent purchases stay protected. Old unreferenced assets are eligible for cleanup.</span></div><div class="admin-actions"><button class="tiny" id="adminScanStorage">SCAN</button><button class="tiny danger" id="adminCleanStorage">CLEAN ORPHANS</button></div></div><div id="adminStorage"><div class="empty">Loading storage…</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="security">
+        <div class="admin-block"><div class="admin-block-head"><div><b>SECURITY / SYSTEM HEALTH</b><span>Live owner-only checks. Admin controls are enforced server-side, not by the hidden button.</span></div></div><div id="adminHealth"><div class="empty">Checking…</div></div><div id="adminSecurity"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="settings">
+        <div class="admin-block"><div class="admin-block-head"><div><b>BOARD SETTINGS</b><span>Operational controls that change the live site.</span></div></div>
+<label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
+<div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div><div class="field"><label>ORPHAN ASSET RETENTION · DAYS</label><input id="storageRetentionDays" type="number" min="7" max="365" step="1" value="30"></div></div>
+<button class="secondary" id="saveConfig">SAVE SETTINGS</button>
+        </div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="moderation">
+        <div class="admin-block"><div class="admin-block-head"><div><b>MODERATION HISTORY</b><span>Private owner log. Ordinary bad taste is not a reset reason.</span></div></div><div id="adminModeration"></div></div>
+      </section>
+    </main>
   </div>
-</aside>
+</section>
 
 <section class="panel modal moderation-modal" id="moderationModal">
   <div class="panel-inner">
@@ -155,6 +195,6 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="boot.js?v=7"></script>
+<script src="boot.js?v=8"></script>
 </body>
 </html>
