@@ -70,3 +70,5 @@
 .logo-trigger{width:100%!important;height:100%!important;box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:11px!important;text-align:center!important;padding:16px!important}
 .logo-trigger>span:not(.logo-choose){display:block!important;width:100%!important;margin:0!important;text-align:center!important;line-height:1.35!important}
 .logo-trigger>.logo-choose{display:inline-flex!important;width:auto!important;margin:0 auto!important;align-self:center!important;text-align:center!important}
+
+.pending-territory{z-index:9;pointer-events:none}.pending-territory .canvas-creative{opacity:1}.pending-territory-badge{position:absolute;right:8px;bottom:8px;z-index:5;padding:5px 7px;border-radius:999px;background:rgba(17,17,17,.88);color:#fff;font:700 9px/1 var(--mono,monospace);letter-spacing:.08em;box-shadow:0 2px 12px rgba(0,0,0,.16)}
