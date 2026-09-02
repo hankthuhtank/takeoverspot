@@ -1,0 +1,77 @@
+name: TAKEOVER Frontend Smoke Test
+'on':
+  push:
+    branches: [main]
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html','.github/workflows/ci-v18.yml']
+  pull_request:
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','contact.js','contact.html']
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          node --check contact.js
+      - name: V18 architecture
+        run: |
+          grep -q 'const TOTAL=16' takeover-v3.js
+          grep -q 'takeover-v3.js?v=18' boot.js
+          grep -q 'takeover-v3.css?v=18' boot.js
+          grep -q 'boot.js?v=14' index.html
+          grep -q 'frameCells' takeover-v3.js
+          grep -q 'startLayerTouch' takeover-v3.js
+          grep -q 'shapeStyle' takeover-v3.js
+          grep -q 'Particle Field' takeover-v3.js
+          grep -q "case'gravity'" takeover-v3.js
+          grep -q "case'liquid'" takeover-v3.js
+          grep -q "case'kinetic'" takeover-v3.js
+          grep -q "case'stardust'" takeover-v3.js
+          grep -q 'takeoverParticle' takeover-v3.css
+          grep -q 'motion-morph' takeover-v3.css
+          grep -q 'motion-orbit' takeover-v3.css
+      - name: Typography interaction regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("os:Number(l.size||18)")) throw Error('pinch no longer captures starting font size');
+          if(!s.includes("layer.size=clamp(editorTouchGesture.os*scale,8,96)")) throw Error('pinch no longer scales actual typography');
+          if(!s.includes('max=\"96\" step=\"1\"')) throw Error('text size slider became too coarse again');
+          if(!s.includes('layerSizeDown')||!s.includes('layerSizeUp')) throw Error('fine size buttons missing');
+          console.log('PASS V18 TYPOGRAPHY');
+          JS
+      - name: Dead-pixel contract
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          const live="canvas.frameCells?.length?[{...selectionShape(frame),cells:nums,clip:ensureFrameClip(nums,frame)}]";
+          if(!s.includes(live)) throw Error('Combined creatives no longer anchor to original footprint');
+          if(!s.includes("currentCanvas.frameCells=[...new Set(selected.map(Number)")) throw Error('Checkout no longer stores original footprint');
+          console.log('PASS V18 DEAD-PIXEL CONTRACT');
+          JS
+      - name: Mobile upload regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes('raw=await f.arrayBuffer()')) throw Error('mobile upload raw-byte hardening missing');
+          if(!s.includes("const f=$('#logoFile')?.files?.[0];if(f)return uploadSpecific")) throw Error('selected file no longer preferred for logo upload');
+          console.log('PASS V18 MOBILE UPLOAD');
+          JS
+      - name: One-dollar start regression
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const s=fs.readFileSync('takeover-v3.js','utf8');
+          if(!s.includes("Math.max(1,Math.trunc(Number($('#startingPrice').value)||10))")) throw Error('Admin starting price no longer permits $1');
+          console.log('PASS V18 $1 CONFIG');
+          JS
