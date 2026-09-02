@@ -1,0 +1,227 @@
+name: TAKEOVER V12 Product Pass
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/takeover-v12-product-pass.yml']
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build V12
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          # ---------- INDEX / ADMIN CONSOLE ----------
+          p=Path('index.html'); h=p.read_text()
+          old_footer='<a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a>'
+          new_footer=old_footer+'<a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X</a><a href="https://www.instagram.com/takeover.spot" target="_blank" rel="noopener">INSTAGRAM</a>'
+          if old_footer in h: h=h.replace(old_footer,new_footer,1)
+
+          admin=r'''<section class="panel admin-console" id="adminPanel">
+  <div class="admin-shell">
+    <aside class="admin-nav">
+      <div class="admin-brand"><div><span>OWNER ONLY</span><b>TAKEOVER<br>CONTROL</b></div><button class="close" data-close>×</button></div>
+      <button class="admin-tab active" data-admin-tab="dashboard">DASHBOARD</button>
+      <button class="admin-tab" data-admin-tab="board">LIVE BOARD</button>
+      <button class="admin-tab" data-admin-tab="purchases">PURCHASES</button>
+      <button class="admin-tab" data-admin-tab="accounts">ACCOUNTS</button>
+      <button class="admin-tab" data-admin-tab="storage">STORAGE</button>
+      <button class="admin-tab" data-admin-tab="security">SECURITY</button>
+      <button class="admin-tab" data-admin-tab="settings">SETTINGS</button>
+      <button class="admin-tab" data-admin-tab="moderation">MODERATION / AUDIT</button>
+      <div class="admin-lock"><b>SERVER-LOCKED</b><span>Every admin request is re-authorized on the backend.</span></div>
+    </aside>
+    <main class="admin-main">
+      <div class="admin-top"><div><span id="adminSectionKicker">OWNER CONSOLE</span><h2 id="adminSectionTitle">Dashboard</h2></div><button class="admin-refresh" id="adminRefresh">REFRESH</button></div>
+
+      <section class="admin-pane active" data-admin-pane="dashboard">
+        <div class="admin-metrics" id="adminOverview"><div class="empty">Loading owner dashboard…</div></div>
+        <div class="admin-block"><div class="admin-block-head"><div><b>RECENT OWNER ACTIVITY</b><span>Maintenance and administrative actions.</span></div></div><div id="adminEvents"><div class="empty">No owner activity yet.</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="board">
+        <div class="admin-block"><div class="admin-block-head"><div><b>LIVE BOARD</b><span>All 16 spots. Emergency reset only.</span></div></div><div id="adminBoard"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="purchases">
+        <div class="admin-block"><div class="admin-block-head"><div><b>RECENT PURCHASES</b><span>Payment state, completed takeovers and refunds.</span></div></div><div id="adminAttempts"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="accounts">
+        <div class="admin-block"><div class="admin-block-head admin-search-head"><div><b>ACCOUNTS</b><span>Search customers and see ownership/purchase history.</span></div><input id="adminAccountSearch" type="search" placeholder="Search email or company"></div><div id="adminAccounts"><div class="empty">Loading accounts…</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="storage">
+        <div class="admin-block"><div class="admin-block-head"><div><b>CREATIVE STORAGE</b><span>Current ads and recent purchases stay protected. Old unreferenced assets are eligible for cleanup.</span></div><div class="admin-actions"><button class="tiny" id="adminScanStorage">SCAN</button><button class="tiny danger" id="adminCleanStorage">CLEAN ORPHANS</button></div></div><div id="adminStorage"><div class="empty">Loading storage…</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="security">
+        <div class="admin-block"><div class="admin-block-head"><div><b>SECURITY / SYSTEM HEALTH</b><span>Live owner-only checks. Admin controls are enforced server-side, not by the hidden button.</span></div></div><div id="adminHealth"><div class="empty">Checking…</div></div><div id="adminSecurity"></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="settings">
+        <div class="admin-block"><div class="admin-block-head"><div><b>BOARD SETTINGS</b><span>Operational controls that change the live site.</span></div></div>
+          <label class="toggle"><input id="purchasesEnabled" type="checkbox"> Purchases enabled</label>
+          <div class="admin-config"><div class="field"><label>EMPTY SPOT START</label><input id="startingPrice" type="number" min="1" step="1"></div><div class="field"><label>MIN TAKEOVER INCREASE</label><input id="minIncrement" type="number" min="1" step="1"></div><div class="field"><label>ORPHAN ASSET RETENTION · DAYS</label><input id="storageRetentionDays" type="number" min="7" max="365" step="1" value="30"></div></div>
+          <button class="secondary" id="saveConfig">SAVE SETTINGS</button>
+        </div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="moderation">
+        <div class="admin-block"><div class="admin-block-head"><div><b>MODERATION HISTORY</b><span>Private owner log. Ordinary bad taste is not a reset reason.</span></div></div><div id="adminModeration"></div></div>
+      </section>
+    </main>
+  </div>
+</section>'''
+          pattern=r'<aside class="panel drawer" id="adminPanel">.*?</aside>\n\n<section class="panel modal moderation-modal" id="moderationModal">'
+          m=re.search(pattern,h,re.S)
+          if not m: raise SystemExit('admin panel marker missing')
+          h=re.sub(pattern,admin+'\n\n<section class="panel modal moderation-modal" id="moderationModal">',h,count=1,flags=re.S)
+          h=h.replace('boot.js?v=7','boot.js?v=8')
+          p.write_text(h)
+
+          # ---------- MAIN JS ----------
+          p=Path('takeover-v3.js'); s=p.read_text()
+          s=s.replace("config={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null}","config={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null,storage_retention_days:30}",1)
+          s=s.replace(".select('starting_price,min_increment,purchases_enabled,page_shield_until')",".select('starting_price,min_increment,purchases_enabled,page_shield_until,storage_retention_days')")
+
+          # predictable geometry: no silent remapping of layers
+          shape=r'''function shapeLayerGeom(l,cells,display='combined'){return{x:Number(l.x)||0,y:Number(l.y)||0,w:Number(l.w)||40,h:Number(l.h)||20,size:Number(l.size)||18}}'''
+          s,n=re.subn(r"function shapeLayerGeom\(.*?\nfunction buildCanvasCreative",shape+'\nfunction buildCanvasCreative',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('shapeLayerGeom replacement failed')
+
+          # preserve richer layer properties
+          old="fit:l.fit==='cover'?'cover':'contain'}"
+          new="fit:l.fit==='cover'?'cover':'contain',motion:['none','float','pulse','drift','glow','tilt','marquee'].includes(l.motion)?l.motion:'none',rotation:clamp(l.rotation||0,-180,180),opacity:clamp(l.opacity==null?1:l.opacity,.15,1),radius:clamp(l.radius||0,0,50),z:clamp(l.z||1,0,30)}"
+          if old not in s: raise SystemExit('normalize layer marker missing')
+          s=s.replace("type:['text','image','button'].includes(l.type)?l.type:'text'","type:['text','image','button','shape'].includes(l.type)?l.type:'text'",1).replace(old,new,1)
+
+          creative=r'''function buildCanvasCreative(s,creativeId,cells=null,interactive=true){const c=normalizeCanvas(s.canvas_json,s.company_name,s.logo_url),a=document.createElement('a');a.className='canvas-creative';if(interactive){a.href=s.website||'#';a.target='_blank';a.rel='noopener sponsored'}else{a.removeAttribute('href');a.removeAttribute('target');a.setAttribute('aria-hidden','true');a.tabIndex=-1}a.dataset.creativeId=creativeId||'';a.style.background=canvasBgStyle(c);c.layers.slice().sort((x,y)=>Number(x.z||1)-Number(y.z||1)).forEach(l=>{const g=shapeLayerGeom(l,cells,c.display),d=document.createElement('div');d.className=`canvas-layer ${layerFont(l)} ${l.type==='button'?'is-button':''} ${l.type==='shape'?'is-shape':''} motion-${l.motion||'none'}`;d.style.left=`${g.x}%`;d.style.top=`${g.y}%`;d.style.width=`${g.w}%`;d.style.height=`${g.h}%`;d.style.color=l.color;d.style.textAlign=l.align;d.style.opacity=String(l.opacity==null?1:l.opacity);d.style.zIndex=String(l.z||1);d.style.setProperty('--rot',`${Number(l.rotation||0)}deg`);d.style.setProperty('--layer-size',`${Math.max(2,g.size/4)}cqw`);if(l.type==='shape'){d.style.background=l.bg||'#111111';d.style.borderRadius=`${Number(l.radius||0)}%`}else if(l.type==='button'){d.textContent=l.text||'LEARN MORE';d.style.background=l.bg||'#111111'}else if(l.type==='image'&&safeImg(l.src)){d.dataset.fit=l.fit||'contain';const img=document.createElement('img');img.src=safeImg(l.src);img.alt=l.role==='logo'?(s.company_name||'Advertiser'):'';d.appendChild(img)}else{d.textContent=l.text||''}a.appendChild(d)});const site=document.createElement('span');site.className='canvas-site';site.textContent=host(s.website);a.appendChild(site);if(interactive)a.addEventListener('click',()=>{if(creativeId)sb.rpc('record_takeover_click',{p_creative_id:creativeId}).catch(()=>{})});return a}'''
+          s,n=re.subn(r"function buildCanvasCreative\(.*?\n\nfunction partitionRectangles",creative+'\n\nfunction partitionRectangles',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('creative renderer replacement failed')
+
+          # Logo preview: image fills card, replace action overlays top-right
+          logo=r'''function setLogoPreview(boxSelector,inputSelector,url,placeholder){const box=$(boxSelector),input=$(inputSelector);if(!box||!input)return;box.onclick=null;[...box.children].forEach(el=>{if(el!==input)el.remove()});const trigger=document.createElement('label');trigger.className='logo-trigger';trigger.htmlFor=input.id;const src=safeImg(url);if(src){const img=document.createElement('img');img.src=src;img.alt='Logo preview';trigger.appendChild(img)}else{const empty=document.createElement('span');empty.className='logo-empty';empty.textContent=placeholder||'CLICK TO CHOOSE LOGO';trigger.appendChild(empty)}const choose=document.createElement('span');choose.className='logo-choose';choose.textContent=src?'REPLACE LOGO':'CHOOSE LOGO';trigger.appendChild(choose);box.insertBefore(trigger,input)}'''
+          s,n=re.subn(r"function setLogoPreview\(.*?\nfunction openTakeover",logo+'\nfunction openTakeover',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('logo preview replacement failed')
+
+          # richer presets + shape helper
+          s=s.replace("['clean','CLEAN'],['ink','INK'],['signal','SIGNAL'],['editorial','EDITORIAL'],['luxury','LUXURY'],['blueprint','BLUEPRINT'],['pop','POP'],['terminal','TERMINAL'],['poster','POSTER'],['photo','PHOTO HERO'],['stamp','STAMP'],['split','SPLIT']","['clean','CLEAN'],['ink','INK'],['signal','SIGNAL'],['editorial','EDITORIAL'],['luxury','LUXURY'],['blueprint','BLUEPRINT'],['pop','POP'],['terminal','TERMINAL'],['poster','POSTER'],['photo','PHOTO HERO'],['stamp','STAMP'],['split','SPLIT'],['neon','NEON'],['orbit','ORBIT'],['glass','GLASS'],['racing','RACING'],['ticker','TICKER'],['aurora','AURORA']",1)
+          marker="function presetButton(text,x,y,w,h,color,bg){return{id:uid(),type:'button',text,x,y,w,h,font:'clean',size:12,color,bg,align:'center'}}"
+          if marker not in s: raise SystemExit('preset helper marker missing')
+          s=s.replace(marker,marker+"\nfunction presetShape(x,y,w,h,bg,radius=0,opacity=1,rotation=0,motion='none'){return{id:uid(),type:'shape',x,y,w,h,bg,radius,opacity,rotation,motion,z:0}}",1)
+          default_marker="default:c.bg={type:'solid',color:'#ffffff'};c.layers=[logo,presetText(brand,10,32,80,24,'heavy',28,'#111111'),presetText(site,12,66,76,9,'mono',9,'#777777'),presetButton('VISIT',34,80,32,10,'#ffffff','#111111')];}"
+          if default_marker not in s: raise SystemExit('preset default marker missing')
+          extra="""case'neon':c.bg={type:'gradient',color:'#060612',color2:'#171742',angle:135};c.layers=[presetShape(5,8,28,28,'#6d5cff',50,.4,0,'drift'),presetShape(70,58,24,24,'#00e6b8',50,.35,0,'float'),Object.assign(presetText(brand,8,30,84,28,'tech',27,'#ffffff'),{motion:'glow',z:3}),Object.assign(presetButton('ENTER',33,72,34,12,'#05050b','#00e6b8'),{motion:'pulse',z:3}),logo&&Object.assign(logo,{motion:'float',z:3})];break;
+case'orbit':c.bg={type:'solid',color:'#f4f2e9'};c.layers=[presetShape(-6,10,38,38,'#ff5f40',50,.9,0,'drift'),presetShape(72,58,34,34,'#111111',50,.95,0,'float'),Object.assign(presetText(brand,13,33,74,25,'modern',28,'#111111'),{z:4}),Object.assign(presetText('OWN THE SPACE',18,63,64,9,'mono',10,'#555555'),{motion:'float',z:4}),logo&&Object.assign(logo,{z:4})];break;
+case'glass':c.bg={type:'gradient',color:'#5b6cff',color2:'#ff6eb4',angle:130};c.layers=[presetShape(10,17,80,66,'#ffffff',8,.24,-3,'float'),Object.assign(presetText(brand,14,35,72,24,'modern',27,'#ffffff'),{z:4}),Object.assign(presetButton('SEE MORE',34,70,32,11,'#111111','#ffffff'),{z:4}),logo&&Object.assign(logo,{z:4})];break;
+case'racing':c.bg={type:'solid',color:'#f7f4ed'};c.layers=[presetShape(-10,12,120,18,'#ff4c22',0,1,-5,'none'),presetShape(-10,70,120,9,'#111111',0,1,-5,'none'),Object.assign(presetText(brand,7,34,86,27,'condensed',34,'#111111','left'),{z:4}),Object.assign(presetText('MOVE FAST → '+site,7,63,86,9,'mono',9,'#111111','left'),{motion:'marquee',z:4}),logo&&Object.assign(logo,{z:4})];break;
+case'ticker':c.bg={type:'solid',color:'#111111'};c.layers=[presetShape(0,0,100,13,'#ffe600',0,1),Object.assign(presetText('TAKEOVER • '+brand+' • '+site+' • ',0,3,100,8,'mono',9,'#111111','left'),{motion:'marquee',z:4}),Object.assign(presetText(brand,8,33,84,29,'heavy',31,'#ffffff'),{motion:'float',z:3}),presetButton('OPEN',36,76,28,11,'#111111','#ffe600'),logo&&Object.assign(logo,{z:4})];break;
+case'aurora':c.bg={type:'gradient',color:'#071c24',color2:'#274b5b',angle:135};c.layers=[presetShape(4,4,48,48,'#5affd8',50,.25,0,'drift'),presetShape(58,48,46,46,'#7c6cff',50,.3,0,'float'),Object.assign(presetText(brand,8,31,84,28,'modern',29,'#ffffff'),{motion:'glow',z:4}),Object.assign(presetText(site,15,68,70,9,'mono',9,'#c8fff0'),{z:4}),logo&&Object.assign(logo,{motion:'float',z:4})];break;
+"""+default_marker
+          s=s.replace(default_marker,extra,1)
+
+          # toolbar: shape + clearer helper text
+          s=s.replace('<button class="tool-btn" id="addButton">+ BUTTON</button><label class="tool-btn canvas-image-upload">+ IMAGE', '<button class="tool-btn" id="addButton">+ BUTTON</button><button class="tool-btn" id="addShape">+ SHAPE</button><label class="tool-btn canvas-image-upload">+ IMAGE',1)
+          s=s.replace('CLICK an item to style it · DRAG to move · GRAB THE CORNER to resize · DOUBLE-CLICK text to edit','DRAG anything · RESIZE from the corner · DOUBLE-CLICK text · use POSITION for exact control',1)
+          add_btn="$('#addButton').onclick=()=>addEditorLayer({type:'button',text:'LEARN MORE',x:30,y:68,w:40,h:12,font:'clean',size:12,color:'#ffffff',bg:'#111111',align:'center'});"
+          if add_btn not in s: raise SystemExit('add button marker missing')
+          s=s.replace(add_btn,add_btn+"$('#addShape').onclick=()=>addEditorLayer({type:'shape',x:25,y:25,w:50,h:50,bg:'#111111',radius:8,opacity:1,z:0});",1)
+
+          # editor renderer + direct DOM syncing
+          editor=r'''function applyEditorLayerStyle(d,l){d.className=`editor-layer ${layerFont(l)} ${l.type==='button'?'is-button':''} ${l.type==='shape'?'is-shape':''} ${editorSelected===l.id?'selected':''} ${l.fit==='cover'?'cover':''} motion-${l.motion||'none'}`;d.style.left=`${l.x}%`;d.style.top=`${l.y}%`;d.style.width=`${l.w}%`;d.style.height=`${l.h}%`;d.style.color=l.color||'#111';d.style.textAlign=l.align||'center';d.style.fontSize=`${clamp(l.size||18,8,200)}px`;d.style.opacity=String(l.opacity==null?1:l.opacity);d.style.zIndex=String(l.z||1);d.style.setProperty('--rot',`${Number(l.rotation||0)}deg`);if(l.type==='button'||l.type==='shape')d.style.background=l.bg||'#111';if(l.type==='shape')d.style.borderRadius=`${Number(l.radius||0)}%`}
+function renderEditor(){const stage=$('#canvasStage');if(!stage||!editorCanvas)return;stage.querySelectorAll('.editor-layer').forEach(x=>x.remove());stage.style.background=canvasBgStyle(editorCanvas);editorCanvas.layers.slice().sort((x,y)=>Number(x.z||1)-Number(y.z||1)).forEach(l=>{const d=document.createElement('div');d.dataset.layer=l.id;applyEditorLayerStyle(d,l);if(l.type==='button'){const content=document.createElement('span');content.className='editor-content';content.textContent=l.text||'LEARN MORE';d.appendChild(content)}else if(l.type==='image'&&safeImg(l.src)){const img=document.createElement('img');img.src=safeImg(l.src);d.appendChild(img)}else if(l.type!=='shape'){const content=document.createElement('span');content.className='editor-content';content.textContent=l.text||'';d.appendChild(content)}const handle=document.createElement('i');handle.className='resize-handle';d.appendChild(handle);d.onpointerdown=e=>startLayerDrag(e,l.id);handle.onpointerdown=e=>{e.stopPropagation();startLayerResize(e,l.id)};d.onclick=e=>{e.preventDefault();editorSelected=l.id;renderEditor()};if(!['image','shape'].includes(l.type))d.ondblclick=e=>{e.preventDefault();e.stopPropagation();editorSelected=l.id;renderInspector();setTimeout(()=>{$('#layerText')?.focus();$('#layerText')?.select()},0)};stage.appendChild(d)});renderInspector()}
+function syncEditorLayer(l){const d=$(`.editor-layer[data-layer="${l.id}"]`);if(!d)return;applyEditorLayerStyle(d,l);const content=d.querySelector('.editor-content');if(content)content.textContent=l.text||''}'''
+          s,n=re.subn(r"function renderEditor\(\).*?\nfunction stageDelta",editor+'\nfunction stageDelta',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('editor renderer replacement failed')
+
+          inspector=r'''function renderInspector(){const box=$('#layerInspector'),l=editorCanvas?.layers.find(x=>x.id===editorSelected);if(!box)return;if(!l){box.innerHTML='<h3>SELECT SOMETHING</h3><p class="canvas-help">Click anything on the canvas. Nothing is auto-moved behind your back.</p>';return}const isText=!['image','shape'].includes(l.type);box.innerHTML=`<h3>EDIT ${l.type.toUpperCase()}</h3>${isText?`<div class="canvas-row"><label>TEXT</label><input id="layerText" type="text" maxlength="140" value="${esc(l.text||'')}"></div><div class="canvas-row"><label>FONT</label><select id="layerFont"><option value="clean">Clean · Manrope</option><option value="heavy">Heavy · Manrope</option><option value="modern">Modern · Space Grotesk</option><option value="condensed">Condensed · Oswald</option><option value="display">Display · Bebas Neue</option><option value="editorial">Editorial · Playfair</option><option value="serif">Classic Serif · Baskerville</option><option value="mono">Mono · DM Mono</option><option value="tech">Tech · Orbitron</option><option value="script">Script · Pacifico</option></select></div><div class="canvas-row"><label>SIZE</label><input id="layerSize" type="range" min="8" max="200" value="${l.size||18}"><output id="layerSizeValue" class="size-readout">${l.size||18}px</output></div><div class="canvas-row"><label>COLOR</label><input id="layerColor" type="color" value="${safeColor(l.color,'#111111')}"></div>`:''}${l.type==='image'?`<div class="canvas-row"><label>FIT</label><select id="layerFit"><option value="contain">Contain</option><option value="cover">Fill</option></select></div>`:''}${['button','shape'].includes(l.type)?`<div class="canvas-row"><label>FILL</label><input id="layerBg" type="color" value="${safeColor(l.bg,'#111111')}"></div>`:''}${l.type==='shape'?`<div class="canvas-row"><label>ROUND</label><input id="layerRadius" type="range" min="0" max="50" value="${l.radius||0}"></div>`:''}<div class="canvas-row"><label>MOTION</label><select id="layerMotion"><option value="none">None</option><option value="float">Float</option><option value="pulse">Pulse</option><option value="drift">Drift</option><option value="glow">Glow</option><option value="tilt">Tilt</option><option value="marquee">Slide</option></select></div><div class="canvas-row"><label>ROTATE</label><input id="layerRotation" type="range" min="-180" max="180" value="${l.rotation||0}"></div><div class="canvas-row"><label>OPACITY</label><input id="layerOpacity" type="range" min="15" max="100" value="${Math.round((l.opacity==null?1:l.opacity)*100)}"></div><h3 class="inspector-sub">POSITION / SIZE</h3><div class="geometry-grid"><label>X<input id="layerX" type="number" min="0" max="100" step="1" value="${Math.round(l.x)}"></label><label>Y<input id="layerY" type="number" min="0" max="100" step="1" value="${Math.round(l.y)}"></label><label>W<input id="layerW" type="number" min="5" max="100" step="1" value="${Math.round(l.w)}"></label><label>H<input id="layerH" type="number" min="5" max="100" step="1" value="${Math.round(l.h)}"></label></div><div class="inspector-actions"><button class="tool-btn" id="centerLayer">CENTER</button><button class="tool-btn" id="fullLayer">FULL WIDTH</button><button class="tool-btn" id="duplicateLayer">DUPLICATE</button><button class="tool-btn" id="frontLayer">FRONT</button><button class="tool-btn" id="backLayer">BACK</button></div><button class="canvas-delete" id="deleteLayer">DELETE ${l.type.toUpperCase()}</button>`;
+const sync=()=>syncEditorLayer(l);if($('#layerText'))$('#layerText').oninput=e=>{l.text=e.target.value;sync()};if($('#layerFont')){$('#layerFont').value=l.font||'clean';$('#layerFont').onchange=e=>{l.font=e.target.value;sync()}}if($('#layerSize'))$('#layerSize').oninput=e=>{l.size=Number(e.target.value);$('#layerSizeValue').textContent=l.size+'px';sync()};if($('#layerColor'))$('#layerColor').oninput=e=>{l.color=e.target.value;sync()};if($('#layerFit')){$('#layerFit').value=l.fit||'contain';$('#layerFit').onchange=e=>{l.fit=e.target.value;renderEditor()}}if($('#layerBg'))$('#layerBg').oninput=e=>{l.bg=e.target.value;sync()};if($('#layerRadius'))$('#layerRadius').oninput=e=>{l.radius=Number(e.target.value);sync()};if($('#layerMotion')){$('#layerMotion').value=l.motion||'none';$('#layerMotion').onchange=e=>{l.motion=e.target.value;sync()}}if($('#layerRotation'))$('#layerRotation').oninput=e=>{l.rotation=Number(e.target.value);sync()};if($('#layerOpacity'))$('#layerOpacity').oninput=e=>{l.opacity=Number(e.target.value)/100;sync()};const geom=()=>{l.x=clamp(Number($('#layerX').value),0,100-l.w);l.y=clamp(Number($('#layerY').value),0,100-l.h);l.w=clamp(Number($('#layerW').value),5,100-l.x);l.h=clamp(Number($('#layerH').value),5,100-l.y);sync()};['#layerX','#layerY','#layerW','#layerH'].forEach(id=>$(id).onchange=geom);$('#centerLayer').onclick=()=>{l.x=(100-l.w)/2;l.y=(100-l.h)/2;renderEditor()};$('#fullLayer').onclick=()=>{l.x=3;l.w=94;renderEditor()};$('#duplicateLayer').onclick=()=>{const copy={...l,id:uid(),x:clamp(l.x+4,0,95),y:clamp(l.y+4,0,95),z:Number(l.z||1)+1};editorCanvas.layers.push(copy);editorSelected=copy.id;renderEditor()};$('#frontLayer').onclick=()=>{l.z=Math.max(...editorCanvas.layers.map(x=>Number(x.z||1)))+1;renderEditor()};$('#backLayer').onclick=()=>{l.z=0;renderEditor()};$('#deleteLayer').onclick=()=>{editorCanvas.layers=editorCanvas.layers.filter(x=>x.id!==l.id);editorSelected=null;renderEditor()}}'''
+          s,n=re.subn(r"function renderInspector\(\).*?\nasync function saveCanvasEditor",inspector+'\nasync function saveCanvasEditor',s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('inspector replacement failed')
+
+          # ---------- ADMIN JS ----------
+          old_admin="if($('#adminBtn'))$('#adminBtn').onclick=async()=>{if(!isAdmin)return;await renderAdmin();openPanel('#adminPanel')};"
+          new_admin=r'''function setAdminTab(name){$$('[data-admin-tab]').forEach(b=>b.classList.toggle('active',b.dataset.adminTab===name));$$('[data-admin-pane]').forEach(p=>p.classList.toggle('active',p.dataset.adminPane===name));const titles={dashboard:'Dashboard',board:'Live board',purchases:'Purchases',accounts:'Accounts',storage:'Storage',security:'Security',settings:'Settings',moderation:'Moderation / audit'};if($('#adminSectionTitle'))$('#adminSectionTitle').textContent=titles[name]||'Owner console';if(name==='accounts')renderAdminAccounts();if(name==='storage')renderAdminStorage();}
+function wireAdminConsole(){$$('[data-admin-tab]').forEach(b=>b.onclick=()=>setAdminTab(b.dataset.adminTab));if($('#adminRefresh'))$('#adminRefresh').onclick=async()=>{await renderAdmin();await renderAdminConsole()};if($('#adminAccountSearch')){let t;$('#adminAccountSearch').oninput=()=>{clearTimeout(t);t=setTimeout(renderAdminAccounts,250)}}if($('#adminScanStorage'))$('#adminScanStorage').onclick=renderAdminStorage;if($('#adminCleanStorage'))$('#adminCleanStorage').onclick=async()=>{if(!confirm('Delete old unreferenced TAKEOVER images now? Current ads and recent purchase assets are protected.'))return;const b=$('#adminCleanStorage'),old=b.textContent;b.disabled=true;b.textContent='CLEANING…';try{const {data,error}=await sb.functions.invoke('takeover-admin-console',{body:{action:'storage_cleanup'}});if(error||data?.error)throw new Error(data?.error||error?.message||'Cleanup failed');toast(`Removed ${data.deleted||0} orphaned files`);await renderAdminStorage();await renderAdminConsole()}catch(e){toast(e.message)}finally{b.disabled=false;b.textContent=old}}}
+async function adminConsoleCall(action,body={}){const {data,error}=await sb.functions.invoke('takeover-admin-console',{body:{action,...body}});if(error||data?.error)throw new Error(data?.error||error?.message||'Admin request failed');return data}
+function bytes(n){n=Number(n||0);if(n<1024)return n+' B';if(n<1048576)return(n/1024).toFixed(1)+' KB';if(n<1073741824)return(n/1048576).toFixed(1)+' MB';return(n/1073741824).toFixed(2)+' GB'}
+async function renderAdminConsole(){try{const data=await adminConsoleCall('overview'),o=data.overview||{},st=data.storage||{};$('#adminOverview').innerHTML=[['ACTIVE SPOTS',`${o.occupied||0} / 16`],['ACCOUNTS',o.users||0],['COMPLETED',o.won||0],['GROSS',cash(o.gross||0)],['REFUNDED',cash(o.refunded||0)],['STORAGE',bytes(st.total_bytes||0)]].map(([l,v])=>`<div class="admin-metric"><span>${l}</span><b>${v}</b></div>`).join('');$('#adminSecurity').innerHTML=`<div class="security-grid"><div class="security-card ${o.admin_count===1?'good':'bad'}"><b>${o.admin_count===1?'✓':'!'}</b><span>SINGLE OWNER</span><small>${o.admin_count===1?'Exactly one server-authorized admin':'Admin count needs review'}</small></div><div class="security-card ${o.stuck_attempts?'bad':'good'}"><b>${o.stuck_attempts?'!':'✓'}</b><span>PAYMENT QUEUE</span><small>${o.stuck_attempts?o.stuck_attempts+' needs review':'No stale payment work'}</small></div><div class="security-card ${o.failed_emails?'bad':'good'}"><b>${o.failed_emails?'!':'✓'}</b><span>EMAIL QUEUE</span><small>${o.failed_emails?o.failed_emails+' failed':'No failed transactional emails'}</small></div><div class="security-card good"><b>✓</b><span>ADMIN API</span><small>JWT + server owner check required</small></div></div>`;renderAdminEvents(data.events||[]);renderAdminStorageData(st)}catch(e){$('#adminOverview').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+function renderAdminEvents(rows){if(!$('#adminEvents'))return;$('#adminEvents').innerHTML=rows.length?rows.map(r=>`<div class="admin-list-row"><div><b>${esc(String(r.action||'OWNER ACTION').replaceAll('_',' ').toUpperCase())}</b><small>${new Date(r.created_at).toLocaleString()}</small></div></div>`).join(''):'<div class="empty">No owner maintenance actions yet.</div>'}
+async function renderAdminAccounts(){const box=$('#adminAccounts');if(!box)return;box.innerHTML='<div class="empty">Loading accounts…</div>';try{const q=$('#adminAccountSearch')?.value||'',data=await adminConsoleCall('users',{search:q,per_page:100}),rows=data.users||[];box.innerHTML=rows.length?rows.map(u=>`<div class="account-row"><div class="account-main"><b>${esc(u.email)}</b><span>${esc(u.company||'No company yet')}</span><small>Joined ${new Date(u.created_at).toLocaleDateString()}${u.last_sign_in_at?' · last sign-in '+new Date(u.last_sign_in_at).toLocaleDateString():''}</small></div><div class="account-stats"><span><b>${u.owned_spots}</b> spots</span><span><b>${u.purchases}</b> purchases</span><span><b>${cash(u.spent)}</b> won</span></div></div>`).join(''):'<div class="empty">No matching accounts.</div>'}catch(e){box.innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+function renderAdminStorageData(st){const box=$('#adminStorage');if(!box||!st)return;box.innerHTML=`<div class="storage-summary"><div><span>TOTAL FILES</span><b>${st.total_objects||0}</b></div><div><span>USED</span><b>${bytes(st.total_bytes||0)}</b></div><div><span>ORPHANS</span><b>${st.orphan_objects||0}</b></div><div><span>RECLAIMABLE</span><b>${bytes(st.orphan_bytes||0)}</b></div></div><p class="admin-note">Retention: ${st.retention_days||30} days. Current spot assets, profile assets and recent purchase assets are never classified as orphans.</p>${Object.entries(st.buckets||{}).map(([k,v])=>`<div class="admin-list-row"><div><b>${esc(k)}</b><small>${v.objects||0} files · ${bytes(v.bytes||0)} · ${v.orphans||0} cleanup candidates</small></div></div>`).join('')}`}
+async function renderAdminStorage(){const box=$('#adminStorage');if(!box)return;box.innerHTML='<div class="empty">Scanning storage…</div>';try{const data=await adminConsoleCall('storage_scan');renderAdminStorageData(data.storage||{})}catch(e){box.innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+if($('#adminBtn'))$('#adminBtn').onclick=async()=>{if(!isAdmin)return;await renderAdmin();await renderAdminConsole();setAdminTab('dashboard');openPanel('#adminPanel')};'''
+          if old_admin not in s: raise SystemExit('admin button marker missing')
+          s=s.replace(old_admin,new_admin,1)
+          s=s.replace("$('#startingPrice').value=config.starting_price;$('#minIncrement').value=config.min_increment;$('#purchasesEnabled').checked=!!config.purchases_enabled;","$('#startingPrice').value=config.starting_price;$('#minIncrement').value=config.min_increment;$('#purchasesEnabled').checked=!!config.purchases_enabled;if($('#storageRetentionDays'))$('#storageRetentionDays').value=config.storage_retention_days||30;",1)
+          old_payload="const payload={starting_price:Math.max(1,Math.trunc(Number($('#startingPrice').value)||10)),min_increment:Math.max(1,Math.trunc(Number($('#minIncrement').value)||1)),purchases_enabled:$('#purchasesEnabled').checked,updated_at:new Date().toISOString()}"
+          new_payload="const payload={starting_price:Math.max(1,Math.trunc(Number($('#startingPrice').value)||10)),min_increment:Math.max(1,Math.trunc(Number($('#minIncrement').value)||1)),purchases_enabled:$('#purchasesEnabled').checked,storage_retention_days:Math.max(7,Math.min(365,Math.trunc(Number($('#storageRetentionDays')?.value)||30))),updated_at:new Date().toISOString()}"
+          if old_payload not in s: raise SystemExit('config payload marker missing')
+          s=s.replace(old_payload,new_payload,1)
+          s=s.replace('ensurePurchaseCanvasCard();ensureAssent();ensureCanvasModal()}','ensurePurchaseCanvasCard();ensureAssent();ensureCanvasModal();wireAdminConsole()}',1)
+          p.write_text(s)
+
+          # ---------- CSS ----------
+          p=Path('takeover-v3.css'); c=p.read_text()
+          c += r'''
+
+/* TAKEOVER V12 — mobile-first board + predictable canvas + full owner console */
+@media(max-width:720px){
+  .board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{--mobile-board-size:unset!important;inset:96px 0 44px!important;left:0!important;right:0!important;top:96px!important;bottom:44px!important;width:auto!important;height:auto!important;transform:none!important}
+  .site-legal{left:0!important;right:0!important;bottom:0!important;height:44px!important;max-width:none!important;padding:6px 8px!important;display:flex!important;align-items:center!important;flex-wrap:nowrap!important;overflow-x:auto!important;background:rgba(247,247,243,.96)!important;border-top:1px solid #deded7!important;scrollbar-width:none!important}
+  .site-legal::-webkit-scrollbar{display:none}.site-legal a{flex:0 0 auto!important}
+  .territory .canvas-layer{font-size:clamp(5px,var(--layer-size,5cqw),54px)!important}.canvas-site{font-size:5px!important}
+  .chrome{z-index:30!important}.identity{max-width:46vw!important}.controls{max-width:54vw!important}
+}
+@media(max-width:430px){.board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{top:92px!important;bottom:42px!important}.site-legal{height:42px!important}.identity>b{font-size:13px!important}.chrome-btn{padding:8px 7px!important}}
+
+/* logo becomes the preview, not a tiny image inside the preview */
+.logo-drop{height:190px!important;min-height:190px!important;padding:0!important;overflow:hidden!important;background:#111!important;border-style:solid!important}
+.logo-trigger{padding:0!important;display:block!important;background:#111!important}.logo-trigger:hover{background:#111!important}.logo-trigger>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important}.logo-empty{position:absolute;inset:0;display:grid!important;place-items:center;color:#777!important;background:#f4f4ef;font:800 10px 'DM Mono',monospace}.logo-trigger>.logo-choose{position:absolute!important;z-index:4!important;top:13px!important;right:13px!important;margin:0!important;background:#fff!important;color:#111!important;box-shadow:0 5px 18px rgba(0,0,0,.2)!important}.logo-trigger:has(.logo-empty)>.logo-choose{top:50%!important;right:50%!important;transform:translate(50%,-50%)!important;background:#111!important;color:#fff!important}
+
+/* editor */
+.canvas-modal{width:min(1240px,calc(100vw - 20px))!important}.canvas-shell{grid-template-columns:minmax(0,1fr) 330px!important}.canvas-stage-wrap{min-height:520px!important;padding:34px!important;overflow:visible!important}.canvas-stage{max-width:820px!important;overflow:hidden!important}.editor-layer{touch-action:none!important}.editor-layer.selected{outline:2px solid #111!important;outline-offset:0!important}.editor-layer .resize-handle{right:3px!important;bottom:3px!important;width:18px!important;height:18px!important;border:3px solid #fff!important;box-shadow:0 1px 8px rgba(0,0,0,.25)!important}.editor-layer.is-shape{border:0}.editor-layer.motion-none{transform:rotate(var(--rot,0deg))}.canvas-layer{transform:rotate(var(--rot,0deg));transform-origin:center}.canvas-layer.is-shape{pointer-events:none}
+.inspector-sub{margin-top:14px!important}.geometry-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.geometry-grid label{font:800 7px 'DM Mono',monospace;color:#777}.geometry-grid input{display:block;width:100%;height:34px;margin-top:4px;border:1px solid #d2d2cb;border-radius:7px;padding:0 6px;background:#fff}.inspector-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:9px}.inspector-actions .tool-btn{width:100%}
+.motion-float{animation:takeoverFloat 4.2s ease-in-out infinite}.motion-pulse{animation:takeoverPulse 2.4s ease-in-out infinite}.motion-drift{animation:takeoverDrift 6.5s ease-in-out infinite}.motion-glow{animation:takeoverGlow 2.8s ease-in-out infinite}.motion-tilt{animation:takeoverTilt 4s ease-in-out infinite}.motion-marquee{animation:takeoverMarquee 5s ease-in-out infinite}
+@keyframes takeoverFloat{0%,100%{transform:translateY(0) rotate(var(--rot,0deg))}50%{transform:translateY(-7%) rotate(var(--rot,0deg))}}@keyframes takeoverPulse{0%,100%{transform:scale(1) rotate(var(--rot,0deg))}50%{transform:scale(1.055) rotate(var(--rot,0deg))}}@keyframes takeoverDrift{0%,100%{transform:translate(-2%,-1%) rotate(var(--rot,0deg))}50%{transform:translate(4%,3%) rotate(var(--rot,0deg))}}@keyframes takeoverGlow{0%,100%{transform:rotate(var(--rot,0deg));filter:drop-shadow(0 0 0 rgba(255,255,255,0))}50%{transform:rotate(var(--rot,0deg));filter:drop-shadow(0 0 12px currentColor)}}@keyframes takeoverTilt{0%,100%{transform:rotate(calc(var(--rot,0deg) - 2deg))}50%{transform:rotate(calc(var(--rot,0deg) + 2deg))}}@keyframes takeoverMarquee{0%,100%{transform:translateX(-3%) rotate(var(--rot,0deg))}50%{transform:translateX(3%) rotate(var(--rot,0deg))}}
+@media(prefers-reduced-motion:reduce){.canvas-layer,.editor-layer{animation:none!important}}
+@media(max-width:900px){.canvas-shell{grid-template-columns:1fr!important}.canvas-stage-wrap{min-height:430px!important;padding:18px!important}.canvas-side{border-top:1px solid #ddd!important;padding-top:15px!important}.logo-drop{height:160px!important;min-height:160px!important}}
+
+/* admin console */
+.admin-console{inset:10px!important;transform:none!important;width:auto!important;height:auto!important;max-height:none!important;border-radius:20px!important;overflow:hidden!important}.admin-console.on{transform:none!important}.admin-shell{height:100%;display:grid;grid-template-columns:220px minmax(0,1fr)}.admin-nav{background:#111;color:#fff;padding:16px;display:flex;flex-direction:column;gap:5px;overflow:auto}.admin-brand{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}.admin-brand span{font:700 7px 'DM Mono',monospace;color:#999}.admin-brand b{display:block;margin-top:5px;font-size:21px;line-height:.9;letter-spacing:-.04em}.admin-nav .close{background:#222;border-color:#444;color:#fff}.admin-tab{border:0;background:transparent;color:#aaa;text-align:left;border-radius:9px;padding:10px 11px;font:800 8px 'DM Mono',monospace;letter-spacing:.05em}.admin-tab:hover,.admin-tab.active{background:#fff;color:#111}.admin-lock{margin-top:auto;border-top:1px solid #333;padding-top:14px}.admin-lock b{display:block;font:800 8px 'DM Mono',monospace;color:#7dffad}.admin-lock span{display:block;color:#888;font-size:9px;line-height:1.4;margin-top:4px}.admin-main{overflow:auto;background:#f7f7f3;padding:22px}.admin-top{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:17px;border-bottom:1px solid #ddd}.admin-top span{font:800 8px 'DM Mono',monospace;color:#777}.admin-top h2{font-size:32px;margin:4px 0 0;letter-spacing:-.055em}.admin-refresh{border:1px solid #ccc;background:#fff;border-radius:999px;padding:9px 12px;font:800 8px 'DM Mono',monospace}.admin-pane{display:none;padding-top:18px}.admin-pane.active{display:block}.admin-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.admin-metric{background:#fff;border:1px solid #ddd;border-radius:14px;padding:15px}.admin-metric span{display:block;font:800 7px 'DM Mono',monospace;color:#777;letter-spacing:.08em}.admin-metric b{display:block;font-size:26px;margin-top:7px;letter-spacing:-.05em}.admin-block{background:#fff;border:1px solid #ddd;border-radius:15px;padding:15px;margin-top:12px}.admin-block-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #e5e5df}.admin-block-head b{font:850 10px 'DM Mono',monospace;letter-spacing:.06em}.admin-block-head span{display:block;color:#777;font-size:9px;margin-top:3px}.admin-actions{display:flex;gap:6px}.admin-list-row,.account-row{padding:12px 0;border-bottom:1px solid #ecece6}.admin-list-row:last-child,.account-row:last-child{border-bottom:0}.admin-list-row b,.account-row b{font-size:12px}.admin-list-row small,.account-row small{display:block;color:#777;font-size:9px;margin-top:3px}.admin-search-head input{width:min(320px,45vw);height:38px;border:1px solid #ccc;border-radius:999px;padding:0 12px}.account-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}.account-main>span{display:block;font-size:10px;color:#444;margin-top:2px}.account-stats{display:flex;gap:7px}.account-stats span{background:#f1f1ec;border-radius:9px;padding:8px 10px;font:700 7px 'DM Mono',monospace;color:#666}.account-stats b{display:block;color:#111;font-size:11px}.storage-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.storage-summary>div{background:#f2f2ed;border-radius:10px;padding:11px}.storage-summary span{display:block;font:800 7px 'DM Mono',monospace;color:#777}.storage-summary b{display:block;font-size:19px;margin-top:4px}.admin-note{font-size:9px;color:#666;line-height:1.5;background:#f7f7f2;padding:9px 10px;border-radius:8px}.security-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.security-card{border:1px solid #ddd;border-radius:11px;padding:12px}.security-card>b{float:right}.security-card>span{display:block;font:800 8px 'DM Mono',monospace}.security-card small{display:block;margin-top:4px;color:#777}.security-card.good>b{color:#138c47}.security-card.bad{border-color:#e8bcb4;background:#fff6f4}.security-card.bad>b{color:#b82c18}.admin-console .admin-row{grid-template-columns:36px minmax(0,1fr) auto}
+@media(max-width:760px){.admin-console{inset:4px!important;border-radius:14px!important}.admin-shell{grid-template-columns:1fr;grid-template-rows:auto 1fr}.admin-nav{display:flex;flex-direction:row;align-items:center;overflow-x:auto;padding:8px;gap:4px}.admin-brand{margin:0;flex:0 0 auto}.admin-brand>div{display:none}.admin-brand .close{width:32px;height:32px}.admin-tab{flex:0 0 auto;padding:9px}.admin-lock{display:none}.admin-main{padding:13px}.admin-top h2{font-size:25px}.admin-metrics{grid-template-columns:repeat(2,1fr)}.account-row{grid-template-columns:1fr}.account-stats{flex-wrap:wrap}.storage-summary{grid-template-columns:repeat(2,1fr)}.security-grid{grid-template-columns:1fr}.admin-search-head{align-items:flex-start}.admin-search-head input{width:48vw}}
+'''
+          p.write_text(c)
+
+          # cache bust
+          p=Path('boot.js'); b=p.read_text().replace('takeover-v3.css?v=11','takeover-v3.css?v=12').replace('takeover-v3.js?v=11','takeover-v3.js?v=12'); p.write_text(b)
+          PY
+      - name: Verify V12
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q "takeover-admin-console" takeover-v3.js
+          grep -q "data-admin-tab=\"storage\"" index.html
+          grep -q "storageRetentionDays" index.html
+          grep -q "motion-float" takeover-v3.css
+          grep -q "presetShape" takeover-v3.js
+          grep -q "case'neon'" takeover-v3.js
+          grep -q "id=\"addShape\"" takeover-v3.js
+          grep -q "return{x:Number(l.x)" takeover-v3.js
+          grep -q "takeover-v3.js?v=12" boot.js
+          grep -q "takeover-v3.css?v=12" boot.js
+          grep -q "boot.js?v=8" index.html
+      - name: Commit V12
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js takeover-v3.css index.html boot.js
+          git commit -m "Ship mobile-first canvas and owner console V12"
+          git push
