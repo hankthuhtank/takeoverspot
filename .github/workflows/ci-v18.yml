@@ -24,13 +24,14 @@ jobs:
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
           grep -q 'takeover-v3.js?v=22' boot.js
-          grep -q 'takeover-v3.css?v=22' boot.js
+          grep -q 'takeover-v3.css?v=22.1' boot.js
           grep -q 'boot.js?v=18' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
           ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html
           grep -q 'window.self!==window.top' boot.js
           grep -q 'TAKEOVER V22 DESKTOP READABILITY' takeover-v3.css
+          grep -q 'TAKEOVER V22.1 DESKTOP TYPE COMPLETION' takeover-v3.css
       - name: Core product contracts
         run: |
           grep -q 'frameCells' takeover-v3.js
