@@ -229,3 +229,8 @@
 .admin-console .admin-row b{font-size:15px!important}.admin-console .admin-row small{font-size:11px!important}.admin-block-head b{font-size:12.5px!important}.admin-block-head span{font-size:11px!important}.admin-note{font-size:11px!important}.security-card>span{font-size:10px!important}.security-card small{font-size:11px!important}.support-head span:not(.support-status){font-size:11px!important}.support-head small{font-size:10px!important}.support-status{font-size:9px!important}.support-row p{font-size:12px!important}
 .spot-control-card>b{font-size:13px!important}.spot-control-card>span{font-size:12.5px!important}.spot-history-meta>b{font-size:14px!important}.spot-history-meta>span,.spot-history-meta>p{font-size:11.5px!important}
 }
+
+
+/* TAKEOVER V22.2 — subtle exact-live Canvas preview */
+.canvas-stage{container-type:size!important}.canvas-preview-toggle{margin-left:auto!important}.canvas-stage.is-preview .editor-grid{display:none!important}.canvas-stage .canvas-preview-live{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;pointer-events:none!important}.canvas-stage .canvas-preview-live .canvas-layer{font-size:clamp(8px,var(--layer-size,5cqw),82px)!important}.canvas-stage.is-preview{cursor:default!important}.canvas-stage.is-preview .canvas-preview-live{z-index:40}.canvas-stage.is-preview .canvas-preview-live .canvas-site{z-index:50}
+@media(max-width:900px){.canvas-preview-toggle{margin-left:0!important;flex:0 0 auto!important}}
