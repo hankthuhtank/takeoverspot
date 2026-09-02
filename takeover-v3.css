@@ -238,3 +238,21 @@
 
 /* TAKEOVER V22.3 — contain admin history previews */
 .spot-history-preview{position:relative!important;isolation:isolate!important}.spot-history-preview>.canvas-creative{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;overflow:hidden!important}.spot-history-preview>.canvas-creative .canvas-layer{font-size:clamp(3px,var(--layer-size,5cqw),18px)!important}.spot-control-modal .panel-inner{position:relative!important;z-index:1!important}
+
+
+/* TAKEOVER V1.0 LAUNCH — canonical cross-device board + WYSIWYG canvas */
+.board{--takeover-board-size:min(100vw,calc(100dvh - 72px))}
+.board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{inset:auto!important;left:50%!important;right:auto!important;top:50%!important;bottom:auto!important;width:var(--takeover-board-size)!important;height:var(--takeover-board-size)!important;transform:translate(-50%,-50%)!important}
+.territory,.canvas-stage{container-type:size!important}
+.territory .canvas-layer,.canvas-stage .canvas-preview-live .canvas-layer,.canvas-stage .editor-layer{font-size:var(--layer-size,5cqw)!important}
+.editor-layer{line-height:1.05!important;word-break:break-word!important;white-space:pre-wrap!important}
+.editor-layer.is-button{padding:.55em .8em!important;border-radius:999px!important;font-weight:850!important;white-space:nowrap!important}
+.editor-content{max-height:100%!important;overflow:hidden!important;line-height:1.05!important}
+.canvas-site{left:2.5cqw!important;bottom:2cqw!important;font-size:1.8cqw!important}
+.preset-thumb{aspect-ratio:1/1;height:auto!important;min-height:58px}
+.saved-design-preview{height:auto!important;min-height:72px}
+.shape-particle{width:1.1cqw!important}
+.canvas-layer[data-shape="ring"],.editor-layer[data-shape="ring"]{border-width:.6cqw!important}
+@keyframes takeoverParticle{0%{transform:translate3d(-2cqw,2.3cqw,0);opacity:.25}55%{opacity:.95}100%{transform:translate3d(2.6cqw,-3.1cqw,0);opacity:.5}}
+@media(max-width:720px){.board{--takeover-board-size:min(100vw,calc(100dvh - 146px))}.board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{top:calc(50dvh + 25px)!important}}
+@media(max-width:720px) and (orientation:landscape){.board{--takeover-board-size:min(100vw,calc(100dvh - 88px))}.board>.grid-lines,.board>.territories,.board>.spot-actions,.board>.takeover-reveal-stage{top:calc(50dvh + 10px)!important}.site-legal{display:none!important}}
