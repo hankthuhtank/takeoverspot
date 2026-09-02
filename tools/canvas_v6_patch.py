@@ -18,13 +18,24 @@ old_logo="function setLogoPreview(boxSelector,inputSelector,url,placeholder){con
 new_logo="function setLogoPreview(boxSelector,inputSelector,url,placeholder){const box=$(boxSelector),input=$(inputSelector);if(!box||!input)return;box.onclick=null;[...box.children].forEach(el=>{if(el!==input)el.remove()});const trigger=document.createElement('label');trigger.className='logo-trigger';trigger.htmlFor=input.id;const src=safeImg(url),el=document.createElement(src?'img':'span');if(src){el.src=src;el.alt='Logo preview'}else el.textContent=placeholder||'CLICK TO CHOOSE LOGO';const choose=document.createElement('span');choose.className='logo-choose';choose.textContent=src?'REPLACE LOGO':'CHOOSE LOGO';trigger.append(el,choose);box.insertBefore(trigger,input)}"
 js=rep(js,old_logo,new_logo,'logo picker')
 
-# Give the multi-display section an addressable wrapper so single-spot editing can hide it.
-js=rep(js,
-'<div class=\\"canvas-section\\"><h3>MULTI-SPOT DISPLAY</h3>',
-'<div class=\\"canvas-section\\" id=\\"multiSpotSection\\"><h3>MULTI-SPOT DISPLAY</h3>',
-'multi spot section id')
+# Address the multi-display section without depending on quote escaping style.
+needle='MULTI-SPOT DISPLAY'
+idx=js.find(needle)
+if idx<0:
+    raise SystemExit('missing multi spot label')
+start=js.rfind('<div class=',0,idx)
+if start<0:
+    raise SystemExit('missing multi spot section opener')
+head=js[start:idx]
+if 'multiSpotSection' not in head:
+    q='\\"' if '\\"canvas-section\\"' in head else '"'
+    target=f'class={q}canvas-section{q}'
+    if target not in head:
+        raise SystemExit('could not identify multi spot section class')
+    head=head.replace(target,f'class={q}canvas-section{q} id={q}multiSpotSection{q}',1)
+    js=js[:start]+head+js[idx:]
 
-# Replace selection geometry with exact connected-shape support and SVG union clipping.
+# Exact connected-shape support and SVG union clipping.
 old_shape="function selectionShape(nums){if(!nums?.length)return{w:1,h:1};const rs=nums.map(n=>Math.floor((n-1)/COLS)),cs=nums.map(n=>(n-1)%COLS);return{w:Math.max(...cs)-Math.min(...cs)+1,h:Math.max(...rs)-Math.min(...rs)+1}}"
 new_shape="""function selectionShape(nums){if(!nums?.length)return{r:0,c:0,w:1,h:1};const rs=nums.map(n=>Math.floor((n-1)/COLS)),cs=nums.map(n=>(n-1)%COLS),r=Math.min(...rs),c=Math.min(...cs);return{r,c,w:Math.max(...cs)-c+1,h:Math.max(...rs)-r+1}}
 function selectionComponents(nums){const left=new Set((nums||[]).map(Number)),out=[];while(left.size){const first=left.values().next().value,q=[first],part=[];left.delete(first);while(q.length){const n=q.shift();part.push(n);[n-COLS,n+COLS,n-1,n+1].forEach(m=>{if(left.has(m)&&neighbor(n,m)){left.delete(m);q.push(m)}})}out.push(part.sort((a,b)=>a-b))}return out}
@@ -32,12 +43,12 @@ function ensureShapeClip(nums){const cells=[...new Set((nums||[]).map(Number))].
 function syncEditorStageShape(){const stage=$('#canvasStage'),grid=stage?.querySelector('.editor-grid'),multi=$('#multiSpotSection');if(!stage||!editorCanvas)return;const nums=[...new Set((selected||[]).map(Number))].sort((a,b)=>a-b),isMulti=nums.length>1,divided=isMulti&&editorCanvas.display==='divided';if(multi)multi.hidden=!isMulti;const shape=divided||!isMulti?{w:1,h:1}:selectionShape(nums);stage.style.aspectRatio=`${shape.w}/${shape.h}`;stage.style.clipPath=divided||!isMulti?'none':ensureShapeClip(nums);stage.dataset.display=divided?'divided':'combined';if(grid){grid.style.gridTemplateColumns=`repeat(${shape.w},1fr)`;grid.style.gridTemplateRows=`repeat(${shape.h},1fr)`;grid.innerHTML='<i></i>'.repeat(shape.w*shape.h);grid.style.opacity=divided||!isMulti?'0':'.13'}}"""
 js=rep(js,old_shape,new_shape,'selection shape')
 
-# Toggling Combined/Divided now immediately changes the editor geometry.
+# Toggling Combined/Divided immediately changes editor geometry.
 old_sync="function syncDisplayButtons(){$('#displayCombined')?.classList.toggle('active',editorCanvas?.display!=='divided');$('#displayDivided')?.classList.toggle('active',editorCanvas?.display==='divided')}"
 new_sync="function syncDisplayButtons(){$('#displayCombined')?.classList.toggle('active',editorCanvas?.display!=='divided');$('#displayDivided')?.classList.toggle('active',editorCanvas?.display==='divided');syncEditorStageShape()}"
 js=rep(js,old_sync,new_sync,'display sync')
 
-# Render a combined creative as the actual connected polyomino, not bounding rectangles.
+# Render combined creatives as their actual connected polyomino, not rectangular fragments.
 old_rects="function territoryRects(){const out=[];for(const g of creativeGroups()){const nums=g.items.map(s=>Number(s.spot_number)).sort((a,b)=>a-b),canvas=normalizeCanvas(g.ad.canvas_json,g.ad.company_name,g.ad.logo_url),parts=canvas.display==='divided'?nums.map(n=>({r:Math.floor((n-1)/COLS),c:(n-1)%COLS,w:1,h:1,cells:[n]})):partitionRectangles(nums);parts.forEach(r=>out.push({...r,creativeId:g.creativeId,ad:g.ad,canvas}))}return out}"
 new_rects="function territoryRects(){const out=[];for(const g of creativeGroups()){const nums=g.items.map(s=>Number(s.spot_number)).sort((a,b)=>a-b),canvas=normalizeCanvas(g.ad.canvas_json,g.ad.company_name,g.ad.logo_url);const parts=canvas.display==='divided'?nums.map(n=>({r:Math.floor((n-1)/COLS),c:(n-1)%COLS,w:1,h:1,cells:[n],clip:''})):selectionComponents(nums).map(cells=>{const b=selectionShape(cells);return{...b,cells,clip:cells.length===b.w*b.h?'':ensureShapeClip(cells)}});parts.forEach(r=>out.push({...r,creativeId:g.creativeId,ad:g.ad,canvas}))}return out}"
 js=rep(js,old_rects,new_rects,'territory geometry')
@@ -46,7 +57,6 @@ old_height="t.style.height=(r.h/ROWS*100)+'%';t.appendChild(buildCanvasCreative(
 new_height="t.style.height=(r.h/ROWS*100)+'%';t.style.clipPath=r.clip||'none';t.appendChild(buildCanvasCreative(r.ad,r.creativeId));"
 js=rep(js,old_height,new_height,'territory clip application')
 
-# Cache bust.
 boot=boot.replace('takeover-v3.css?v=5','takeover-v3.css?v=6').replace('takeover-v3.js?v=5','takeover-v3.js?v=6')
 
 css += r'''
@@ -67,4 +77,3 @@ js_path.write_text(js)
 css_path.write_text(css)
 boot_path.write_text(boot)
 print('TAKEOVER Canvas V6 patch applied')
-# workflow trigger
