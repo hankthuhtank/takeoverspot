@@ -198,7 +198,7 @@
     <div class="field"><label>REASON</label><select id="refundReason"><option value="">Choose a reason</option><option value="customer_request">Customer request</option><option value="duplicate">Duplicate charge</option><option value="fraud_suspected">Fraud suspected</option><option value="service_issue">TAKEOVER service issue</option><option value="goodwill">Goodwill / courtesy</option><option value="other">Other</option></select></div>
     <div class="field"><label>PRIVATE NOTE · OPTIONAL</label><textarea id="refundNote" maxlength="500" placeholder="Internal note. Required if you choose Other."></textarea></div>
     <div class="field"><label>TERRITORY AFTER A FULL REFUND</label><select id="refundTerritoryAction"><option value="none">REFUND ONLY · LEAVE TERRITORY AS-IS</option><option value="restore_previous">RESTORE PREVIOUS OWNER / STATE</option><option value="vacate_keep_price">VACATE · KEEP CURRENT MARKET PRICE</option></select></div>
-    <p class="hint" id="refundHint">Territory actions require the full remaining refund and affect only spots still tied to this exact payment. Refunds can no longer reset a spot to $1 from this screen.</p>
+    <p class="hint" id="refundHint">Full refunds default to restoring the exact previous owner/state. Partial refunds leave territory unchanged.</p>
     <button class="action danger" id="confirmRefund">ISSUE REFUND</button>
     <button class="secondary" id="refundCancel">CANCEL</button>
   </div>
