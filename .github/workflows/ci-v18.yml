@@ -20,12 +20,12 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check contact.js
-      - name: V20 architecture
+      - name: V21 architecture
         run: |
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=20' boot.js
-          grep -q 'takeover-v3.css?v=20' boot.js
-          grep -q 'boot.js?v=16' index.html
+          grep -q 'takeover-v3.js?v=21' boot.js
+          grep -q 'takeover-v3.css?v=21' boot.js
+          grep -q 'boot.js?v=17' index.html
           grep -q 'frameCells' takeover-v3.js
           grep -q 'startLayerTouch' takeover-v3.js
           grep -q 'Particle Field' takeover-v3.js
@@ -50,7 +50,7 @@ jobs:
           if(s.includes("if(!editorWebsite)return toast('Enter a website')")) throw Error('website became mandatory in canvas again');
           if(!s.includes("editorWebsite=normalizeWebsite($('#companyWebsite').value||'')")) throw Error('canvas still fabricates a website');
           if(!s.includes('anonymous to visitors')) throw Error('private/pseudonymous checkout disclosure missing');
-          console.log('PASS V20 OPTIONAL LINK / IDENTITY');
+          console.log('PASS OPTIONAL LINK / IDENTITY');
           JS
           grep -q 'NAME / BRAND' index.html
           grep -q 'LINK · OPTIONAL' index.html
@@ -65,7 +65,7 @@ jobs:
           if(!s.includes('logoExplicitlyRemoved=true')) throw Error('logo removal state missing');
           if(!s.includes("if(logoExplicitlyRemoved)return null")) throw Error('removed logo can leak back into checkout');
           if(!s.includes("clear_takeover_profile_logo")) throw Error('default profile logo is not cleared');
-          console.log('PASS V20 LOGO REMOVAL');
+          console.log('PASS LOGO REMOVAL');
           JS
       - name: Private design library regression
         run: |
@@ -76,10 +76,21 @@ jobs:
             if(!s.includes(token)) throw Error('saved design contract missing: '+token);
           }
           if(!s.includes(".limit(40)")) throw Error('saved library cap no longer reflected in client');
-          console.log('PASS V20 DESIGN LIBRARY');
+          console.log('PASS DESIGN LIBRARY');
           JS
           grep -q 'SAVED DESIGNS' index.html
           grep -qi 'saved-design library' privacy.html
+      - name: Spot history and owner-control regression
+        run: |
+          grep -q 'takeover_spot_history' takeover-v3.js
+          grep -q 'admin_restore_takeover_spot' takeover-v3.js
+          grep -q 'admin_set_takeover_spot_price' takeover-v3.js
+          grep -q 'admin_vacate_takeover_spot' takeover-v3.js
+          grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
+          grep -q 'adminHistorySpotFilter' index.html
+          grep -q 'data-control' takeover-v3.js
+          grep -q 'RESTORE THIS STATE' takeover-v3.js
+          echo 'PASS V21 SPOT CONTROL'
       - name: Typography interaction regression
         run: |
           node - <<'JS'
