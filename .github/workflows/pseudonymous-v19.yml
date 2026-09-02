@@ -1,0 +1,133 @@
+name: TAKEOVER V19 Pseudonymous Upgrade
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/pseudonymous-v19.yml']
+permissions:
+  contents: write
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply V19 upgrade
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def load(p): return Path(p).read_text()
+          def save(p,s): Path(p).write_text(s)
+          def rep(s,old,new,label):
+              if old not in s:
+                  raise SystemExit(f'missing patch target: {label}')
+              return s.replace(old,new)
+
+          # Front page / purchase language
+          p='index.html'; s=load(p)
+          s=rep(s,'<meta name="description" content="Buy part of the webpage. Make it yours. Keep it until somebody pays more.">','<meta name="description" content="Claim part of the webpage. Make it yours. Keep it until somebody pays more.">','meta')
+          s=rep(s,'<p class="intro-copy">Pick a spot. Pay more than its current owner. Design the territory yourself. Own touching spots to build something larger. Own all sixteen and you own the page.</p>','<p class="intro-copy">Pick a spot. Pay more than its current owner. Put a brand, project, alias, artwork or message on it. Own touching spots to build something larger. Own all sixteen and you own the page.</p>','intro')
+          s=rep(s,'<small id="territoryHint">Add touching spots to make your ad larger.</small>','<small id="territoryHint">Add touching spots to make your canvas larger.</small>','territory hint')
+          s=rep(s,'<div class="form-grid two"><div class="field"><label>COMPANY</label><input id="companyName" maxlength="80" placeholder="Your company"></div><div class="field"><label>WEBSITE</label><input id="companyWebsite" maxlength="300" placeholder="yourcompany.com"></div></div>','<div class="form-grid two"><div class="field"><label>NAME / BRAND</label><input id="companyName" maxlength="80" placeholder="Your name, brand or alias"></div><div class="field"><label>LINK · OPTIONAL</label><input id="companyWebsite" maxlength="300" placeholder="Website, social profile, or leave blank"></div></div>','purchase fields')
+          s=rep(s,'<div class="rule"><b>Keep it until you are outbid.</b><span>No daily timer. Another advertiser can take it by paying the valid takeover price.</span></div>','<div class="rule"><b>Keep it until you are outbid.</b><span>No daily timer. Someone else can take it by paying the valid takeover price.</span></div>','quick rule')
+          s=rep(s,'<p class="rules-copy"><strong>Payments.</strong> You are buying advertising placement, not a deposit or stored value. If the board changes during Checkout and your purchase can no longer be applied, it is automatically refunded.</p>','<p class="rules-copy"><strong>Payments.</strong> You are buying digital placement, not a deposit or stored value. If the board changes during Checkout and your purchase can no longer be applied, it is automatically refunded.</p>','quick payment')
+          s=rep(s,'<p class="rules-copy"><strong>Advertiser responsibility.</strong> Advertisers are responsible for what they publish. TAKEOVER does not endorse third-party ads.</p>','<p class="rules-copy"><strong>Owner responsibility.</strong> Territory owners are responsible for what they publish. TAKEOVER does not endorse user-created content.</p>','quick responsibility')
+          s=rep(s,'Resets are reserved for serious fraud, malware/phishing, illegal or dangerous activity, impersonation/rights abuse, or comparable extreme risk.','Resets are reserved for explicit nudity or graphic sexual content, serious fraud, malware/phishing, illegal or dangerous activity, impersonation/rights abuse, or comparable extreme risk.','quick moderation')
+          s=s.replace('placeholder="Search email or company"','placeholder="Search email or name / brand"')
+          s=s.replace('<script src="boot.js?v=14"></script>','<script src="boot.js?v=15"></script>')
+          save(p,s)
+
+          # Main app behavior
+          p='takeover-v3.js'; s=load(p)
+          old="function buildCanvasCreative(s,creativeId,cells=null,interactive=true){const c=normalizeCanvas(s.canvas_json,s.company_name,s.logo_url),a=document.createElement('a');a.className='canvas-creative';if(interactive){a.href=s.website||'#';a.target='_blank';a.rel='noopener sponsored'}else{a.removeAttribute('href');a.removeAttribute('target');a.setAttribute('aria-hidden','true');a.tabIndex=-1}a.dataset.creativeId=creativeId||'';"
+          new="function buildCanvasCreative(s,creativeId,cells=null,interactive=true){const c=normalizeCanvas(s.canvas_json,s.company_name,s.logo_url),link=normalizeWebsite(s.website||''),a=document.createElement(interactive&&link?'a':'div');a.className='canvas-creative';if(interactive&&link){a.href=link;a.target='_blank';a.rel='noopener sponsored'}else if(!interactive){a.setAttribute('aria-hidden','true');a.tabIndex=-1}else{a.classList.add('is-display-only')}a.dataset.creativeId=creativeId||'';"
+          s=rep(s,old,new,'linkless canvas start')
+          old="const site=document.createElement('span');site.className='canvas-site';site.textContent=host(s.website);a.appendChild(site);if(interactive)a.addEventListener('click',()=>{if(creativeId)sb.rpc('record_takeover_click',{p_creative_id:creativeId}).catch(()=>{})});return a}"
+          new="if(link){const site=document.createElement('span');site.className='canvas-site';site.textContent=host(link);a.appendChild(site)}if(interactive&&link)a.addEventListener('click',()=>{if(creativeId)sb.rpc('record_takeover_click',{p_creative_id:creativeId}).catch(()=>{})});return a}"
+          s=rep(s,old,new,'linkless canvas end')
+          s=s.replace("website:normalizeWebsite($('#companyWebsite')?.value||'example.com')","website:normalizeWebsite($('#companyWebsite')?.value||'')")
+          s=s.replace("site=host(editorWebsite||'example.com').toUpperCase()","site=host(editorWebsite||'').toUpperCase()")
+          s=s.replace("website:editorWebsite||'https://example.com'","website:editorWebsite||''")
+          s=s.replace("c.layers=c.layers.filter(Boolean);return c}","c.layers=c.layers.filter(Boolean).filter(l=>!(l.type==='text'&&!String(l.text||'').trim()));return c}")
+          s=s.replace("<h3>BRAND</h3><div class=\"canvas-row\"><label>NAME</label><input id=\"canvasCompany\" type=\"text\" maxlength=\"80\" placeholder=\"Company name\"></div><div class=\"canvas-row\"><label>LINK</label><input id=\"canvasWebsite\" type=\"text\" maxlength=\"300\" placeholder=\"yourcompany.com\"></div>","<h3>IDENTITY</h3><div class=\"canvas-row\"><label>NAME / BRAND</label><input id=\"canvasCompany\" type=\"text\" maxlength=\"80\" placeholder=\"Name, brand or alias\"></div><div class=\"canvas-row\"><label>LINK · OPTIONAL</label><input id=\"canvasWebsite\" type=\"text\" maxlength=\"300\" placeholder=\"Website, social profile, or blank\"></div>")
+          s=s.replace("editorWebsite=normalizeWebsite($('#companyWebsite').value||'example.com')","editorWebsite=normalizeWebsite($('#companyWebsite').value||'')")
+          s=s.replace("if(!editorCompany)return toast('Enter a company name');if(!editorWebsite)return toast('Enter a website');","if(!editorCompany)return toast('Enter a name or brand');")
+          s=s.replace("if(!company)return toast('Enter your company name');if(!website)return toast('Enter your website');","if(!company)return toast('Enter a name or brand');")
+          s=s.replace("intro.textContent='Pick a spot. Pay more than its current owner. Build the territory however you want with SPOT CANVAS. Own touching spots to make a larger creative. Own all sixteen and you own the page.'","intro.textContent='Pick a spot. Pay more than its current owner. Put a brand, project, alias, artwork or message on it with SPOT CANVAS. Own touching spots to make a larger creative. Own all sixteen and you own the page.'")
+          if "Enter your website" in s or "Enter a website" in s:
+              raise SystemExit('mandatory website validation still present in frontend')
+          if "editorWebsite=normalizeWebsite($('#companyWebsite').value||'example.com')" in s:
+              raise SystemExit('example.com fallback remains')
+          save(p,s)
+
+          # Loader cache bust
+          p='boot.js'; s=load(p)
+          s=s.replace("main.src='takeover-v3.js?v=18'","main.src='takeover-v3.js?v=19'")
+          save(p,s)
+
+          # Full Rules: digital real estate, optional link, explicit-content red line
+          p='auction-rules.html'; s=load(p)
+          s=s.replace('<section class="hero"><div class="eyebrow">LEGAL / RULES</div><h1>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</h1><p>Sixteen spots. Buy one, build connected territory, defend what you own, customize it with SPOT CANVAS, or take the whole page. The live server—not a stale browser screen—decides which purchase wins.</p>','<section class="hero"><div class="eyebrow">LEGAL / RULES</div><h1>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</h1><p>Sixteen pieces of digital real estate. A business, creator, artist, project or pseudonymous owner can take one, build connected territory, customize it with SPOT CANVAS, or take the whole page. The live server—not a stale browser screen—decides which purchase wins.</p>')
+          s=s.replace("Advertisers may use TAKEOVER's structured editor","Territory owners may use TAKEOVER's structured editor")
+          s=s.replace('destination website, and Combined or Divided display','an optional destination link, and Combined or Divided display')
+          s=s.replace('Advertisers remain solely responsible for the legality and accuracy of what they publish and for their dealings with visitors.','Territory owners remain solely responsible for the legality and accuracy of what they publish and for any dealings with visitors.')
+          s=s.replace('fraud or scams; malware, phishing, or malicious redirects; illegal or clearly dangerous activity; impersonation or serious rights abuse; credible threats or material safety concerns; or another comparably serious legal or platform risk.','explicit nudity, pornography, or graphic sexual content; fraud or scams; malware, phishing, or malicious redirects; illegal or clearly dangerous activity; impersonation or serious rights abuse; credible threats or material safety concerns; or another comparably serious legal or platform risk.')
+          save(p,s)
+
+          # Content policy: broad creative use + explicit nudity line + optional links + dead-pixel behavior
+          p='content-policy.html'; s=load(p)
+          s=s.replace('Advertisers get wide creative freedom','Territory owners get wide creative freedom')
+          s=s.replace('Ads are not removed merely because they are weird, loud, ugly, provocative, competitive, sarcastic, annoying, unconventional, or disliked by another person. TAKEOVER is designed to let advertisers have personality and take creative risks.','Placements are not removed merely because they are weird, loud, ugly, provocative, competitive, sarcastic, annoying, unconventional, artistic, noncommercial, or disliked by another person. TAKEOVER is designed to let owners have personality and take creative risks.')
+          s=s.replace('<article id="responsibility"><h2>2. The advertiser is responsible for the ad</h2><p>TAKEOVER provides the placement. The advertiser provides the message. The advertiser is solely responsible for the truthfulness, legality, substantiation, safety, and accuracy of everything submitted or linked from an ad, including descriptions, prices, discounts, offers, qualifications, availability, testimonials, warranties, product claims, and service claims.</p><p>Displaying an advertisement does not mean TAKEOVER has investigated, verified, licensed, certified, sponsored, recommended, or endorsed the advertiser. TAKEOVER is not a party to transactions between advertisers and visitors.</p></article>','<article id="responsibility"><h2>2. The territory owner is responsible for the content</h2><p>TAKEOVER provides the placement. The owner provides the identity, artwork, message and optional link. The owner is solely responsible for the legality, safety, accuracy and rights to everything submitted or linked from a placement.</p><p>A placement can be commercial, artistic, personal, promotional or pseudonymous. Displaying it does not mean TAKEOVER has investigated, verified, sponsored, recommended, or endorsed its owner or message.</p></article>')
+          s=s.replace('You must own or have permission to use every company name, trade name, logo, trademark, photograph, graphic, testimonial, creative asset, and website you submit. Do not impersonate a business, person, public agency, or organization you are not authorized to represent.','You may publicly use a real name, brand name, creator name, project name, handle, or pseudonym. You must own or have permission to use every name, logo, trademark, photograph, graphic, artwork, creative asset, and linked destination you submit. Do not use a pseudonym to impersonate a business, person, public agency, creator, or organization you are not authorized to represent.')
+          s=s.replace('Fraud or scams; malware, phishing, credential theft, or malicious redirects; illegal or clearly dangerous activity; impersonation or serious unauthorized use of another party\'s rights; credible threats or material safety concerns; or another comparably serious legal or platform risk.','Explicit nudity, pornography, or graphic sexual content; fraud or scams; malware, phishing, credential theft, or malicious redirects; illegal or clearly dangerous activity; impersonation or serious unauthorized use of another party\'s rights; credible threats or material safety concerns; or another comparably serious legal or platform risk.')
+          s=s.replace('<article id="format"><h2>6. Ad format</h2>','<article id="format"><h2>6. Territory format</h2>')
+          s=s.replace('Advertisers may use safe structured controls','Owners may use safe structured controls')
+          s=s.replace('Creative automatically adapts to the territory actually owned. If cells are lost, TAKEOVER may resize, partition, rearrange, crop, simplify, or otherwise adapt the creative so it occupies only the cells still controlled by that advertiser. This is an expected part of the product, not an alteration requiring advertiser approval.','Combined creatives keep their original purchased footprint. If cells are lost, those cells become holes in the composition while the remaining owned cells continue to show the corresponding portion of the original artwork. TAKEOVER clips content so it never appears inside territory the owner no longer controls.')
+          s=s.replace('<article id="links"><h2>7. Destination websites</h2><p>Your linked destination must be a legitimate HTTP or HTTPS website','<article id="links"><h2>7. Optional destination links</h2><p>A link is optional. If you leave it blank, the territory is display-only and does not open another page. If you provide one, it must be a legitimate HTTP or HTTPS destination')
+          s=s.replace('destination website, and why you believe','destination link if one exists, and why you believe')
+          save(p,s)
+
+          # Terms: define pseudonymous owner + optional links while keeping future seasons only here
+          p='terms.html'; s=load(p)
+          s=s.replace('a digital advertising page where advertisers purchase control of numbered screen locations','a competitive digital creative page where people, creators, brands, projects, and businesses purchase control of numbered screen locations')
+          s=s.replace('You must be at least 18 years old and legally able to enter contracts on behalf of yourself or the business you represent.</p>','You must be at least 18 years old and legally able to enter contracts on behalf of yourself or the business you represent.</p><p>For these Terms, an “advertiser” or “territory owner” includes any person or entity purchasing a spot, even when the placement is noncommercial or publicly uses a pseudonym, alias, creator name, project name, or handle.</p>')
+          s=s.replace('TAKEOVER sells temporary control of digital advertising space on one webpage.','TAKEOVER sells temporary control of digital creative space on one webpage.')
+          s=s.replace('It has no guaranteed resale value, cash value, minimum duration, traffic level, or entitlement to continued operation of TAKEOVER.</strong>','It has no guaranteed resale value, cash value, minimum duration, traffic level, or entitlement to continued operation of TAKEOVER.</strong>')
+          marker='Owners of touching spots may create a larger territory and use <strong>SPOT CANVAS</strong>'
+          if marker in s:
+              s=s.replace(marker,'A destination link is optional. A territory with no destination link is display-only. If a link is supplied, it must comply with these Terms and the Content Policy.</p><p>Owners of touching spots may create a larger territory and use <strong>SPOT CANVAS</strong>',1)
+          s=s.replace('You are responsible for maintaining control of the email account used to access your spots and for all changes made through that account. Do not use an email address or business identity you are not authorized to represent.','You are responsible for maintaining control of the email account used to access your spots and for all changes made through that account. Your public display name may be a pseudonym or alias and does not need to match your email or legal name, but you may not impersonate a person, business, creator, agency, or organization you are not authorized to represent.')
+          save(p,s)
+
+          # Privacy: reflect public aliases and optional links (no season/archive copy here)
+          p='privacy.html'; s=load(p)
+          s=s.replace('company name, website, logo or image uploads','display name, brand name or alias, optional destination link, logo or image uploads')
+          s=s.replace('The purpose of TAKEOVER is public advertising. Company names, logos, destination websites, creative designs, occupied spot locations, and current displayed spot prices are public.','TAKEOVER is a public creative-placement page. Display names, aliases, brand names, logos, optional destination links, creative designs, occupied spot locations, and current displayed spot prices are public.')
+          s=s.replace('authenticate advertisers and let them manage owned spots;','authenticate territory owners and let them manage owned spots;')
+          s=s.replace('display and update public advertisements;','display and update public creative placements;')
+          s=s.replace('Current spot ownership and public advertising data','Current spot ownership and public creative data')
+          s=s.replace('Uploaded advertising assets','Uploaded creative assets')
+          s=s.replace('You can update the company identity, website, and logo associated with spots you own','You can update the display name or alias, optional destination link, and logo associated with spots you own')
+          s=s.replace('If you believe your account, payment, or company identity has been misused','If you believe your account, payment, or displayed identity has been misused')
+          save(p,s)
+
+          # Sanity
+          assert 'LINK · OPTIONAL' in load('index.html')
+          assert "interactive&&link?'a':'div'" in load('takeover-v3.js')
+          assert "if(!website)return toast('Enter your website')" not in load('takeover-v3.js')
+          assert 'Explicit nudity, pornography, or graphic sexual content' in load('content-policy.html')
+          assert 'Future seasons and historical archives' in load('terms.html')
+          for f in ['index.html','auction-rules.html','content-policy.html','privacy.html']:
+              assert 'Future seasons' not in load(f)
+          PY
+          node --check takeover-v3.js
+          node --check boot.js
+          git diff --check
+          git config user.name "TAKEOVER Build"
+          git config user.email "actions@takeoverspot.com"
+          git add index.html takeover-v3.js boot.js auction-rules.html content-policy.html terms.html privacy.html
+          git commit -m "Open TAKEOVER to pseudonymous creative territory"
+          git push
