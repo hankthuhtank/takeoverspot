@@ -15,17 +15,19 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: npm install jsdom@25 --no-save
-      - name: Syntax and V12 architecture
+      - name: Syntax and V13 architecture
         run: |
           node --check takeover-v3.js
           node --check boot.js
           grep -q 'const TOTAL=16' takeover-v3.js
-          grep -q 'takeover-v3.js?v=12' boot.js
-          grep -q 'takeover-v3.css?v=12' boot.js
+          grep -q 'takeover-v3.js?v=13' boot.js
+          grep -q 'takeover-v3.css?v=13' boot.js
           grep -q 'Promise.resolve(rawRpc' boot.js
           grep -q 'prepareImageFile' takeover-v3.js
           grep -q 'IMAGE_INPUT_LIMIT=25' takeover-v3.js
           grep -q "return{x:Number(l.x)" takeover-v3.js
+          grep -q "x:clamp(l.x,-25,125)" takeover-v3.js
+          grep -q 'id=\"layerX\" type=\"number\" min=\"-25\" max=\"125\"' takeover-v3.js
           grep -q 'id=\"addShape\"' takeover-v3.js
           grep -q 'presetShape' takeover-v3.js
           grep -q "case'neon'" takeover-v3.js
@@ -50,7 +52,7 @@ jobs:
           if grep -qi 'The Center Four' index.html; then exit 1; fi
           if grep -q 'launch.js' boot.js; then exit 1; fi
           if grep -q 'polish.js' boot.js; then exit 1; fi
-      - name: 16-cell board and Canvas V12 flows
+      - name: 16-cell board and Canvas V13 flows
         run: |
           cat > v3.cjs <<'JS'
           const fs=require('fs'),{JSDOM}=require('jsdom');
@@ -97,7 +99,7 @@ jobs:
             if(!stage.style.clipPath.includes('takeover-shape-3-7-11-12'))throw Error('Combined |_ shape clip missing');
             let layer=w.document.querySelector('#canvasStage .editor-layer');
             const directWidth=parseFloat(layer?.style.width||0);
-            if(directWidth<70)throw Error('V12 must preserve direct layer geometry, got '+directWidth);
+            if(directWidth<70)throw Error('Direct layer geometry was squeezed: '+directWidth);
             const preview=w.document.querySelector('#purchaseCanvasPreview .canvas-creative');
             if(preview?.hasAttribute('href'))throw Error('Purchase preview must not be a live link');
             w.document.querySelector('#displayDivided').click();
@@ -112,14 +114,14 @@ jobs:
 
             w.document.querySelector('#addShape').click();
             if(!w.document.querySelector('#layerMotion'))throw Error('Motion control missing');
-            if(!w.document.querySelector('#layerX')||!w.document.querySelector('#layerW'))throw Error('Exact geometry controls missing');
+            if(w.document.querySelector('#layerX')?.min!=='-25'||w.document.querySelector('#layerW')?.max!=='150')throw Error('Bleed geometry controls missing');
             if(!w.document.querySelector('#duplicateLayer')||!w.document.querySelector('#frontLayer'))throw Error('Layer management controls missing');
             w.document.querySelector('#addText').click();
             const text=w.document.querySelector('#layerText');
             if(!text)throw Error('Text editor missing');
             text.value='HELLO WORLD';text.dispatchEvent(new w.Event('input',{bubbles:true}));
             if(w.document.querySelector('#layerText')!==text)throw Error('Text editor recreated during typing');
-            console.log('PASS TAKEOVER CANVAS V12');process.exit(0);
+            console.log('PASS TAKEOVER CANVAS V13');process.exit(0);
           },500);
           JS
           timeout 14s node v3.cjs
