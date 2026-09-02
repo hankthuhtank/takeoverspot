@@ -1,0 +1,51 @@
+name: TAKEOVER Board Read Guard Fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/board-read-guard-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Harden board reads
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('takeover-v3.js')
+          s=p.read_text()
+          old="async function openAccount(){await loadIdentity();await renderAccount();openPanel('#accountPanel')}"
+          new="async function openAccount(){await loadIdentity();await refreshBoard();await renderAccount();openPanel('#accountPanel')}"
+          if old not in s: raise SystemExit('openAccount block not found')
+          s=s.replace(old,new,1)
+          old2="async function refreshBoard(){const [{data:board,error},{data:cfg}]=await Promise.all([sb.from('takeover_spots').select(boardCols).order('spot_number'),sb.from('takeover_config').select('starting_price,min_increment,purchases_enabled,page_shield_until').eq('singleton',true).maybeSingle()]);if(error)return;if(cfg)config=cfg;spots=board||[];renderBoard();renderChrome()}"
+          new2="async function refreshBoard(){const [{data:board,error},{data:cfg}]=await Promise.all([sb.from('takeover_spots').select(boardCols).order('spot_number'),sb.from('takeover_config').select('starting_price,min_increment,purchases_enabled,page_shield_until').eq('singleton',true).maybeSingle()]);if(error){console.error('TAKEOVER board read failed',error);config.purchases_enabled=false;renderChrome();toast('Board data unavailable — refresh before purchasing.');return}if(cfg)config=cfg;spots=board||[];renderBoard();renderChrome()}"
+          if old2 not in s: raise SystemExit('refreshBoard block not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+
+          b=Path('boot.js')
+          bs=b.read_text().replace("takeover-v3.css?v=7","takeover-v3.css?v=8").replace("takeover-v3.js?v=7","takeover-v3.js?v=8")
+          b.write_text(bs)
+
+          i=Path('index.html')
+          ix=i.read_text().replace('boot.js?v=3','boot.js?v=4')
+          i.write_text(ix)
+          PY
+      - name: Verify
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q "await refreshBoard();await renderAccount()" takeover-v3.js
+          grep -q "Board data unavailable" takeover-v3.js
+          grep -q "takeover-v3.js?v=8" boot.js
+          grep -q "boot.js?v=4" index.html
+      - name: Commit
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add takeover-v3.js boot.js index.html
+          git commit -m "Fix board visibility after purchase"
+          git push
