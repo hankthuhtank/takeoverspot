@@ -1,0 +1,43 @@
+name: TAKEOVER V15 CI Update
+'on':
+  push:
+    branches: [main]
+    paths: ['.github/workflows/takeover-v15-ci-update.yml']
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update permanent smoke test
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/ci.yml')
+          s=p.read_text()
+          s=s.replace('Syntax and V13 architecture','Syntax and V15 architecture')
+          s=s.replace('16-cell board and Canvas V13 flows','16-cell board and Canvas V15 flows')
+          s=s.replace("takeover-v3.js?v=13","takeover-v3.js?v=15")
+          s=s.replace("takeover-v3.css?v=13","takeover-v3.css?v=15")
+          s=s.replace("const cfg={starting_price:10,min_increment:1,purchases_enabled:true,page_shield_until:null,storage_retention_days:30};","const cfg={starting_price:1,min_increment:1,purchases_enabled:true,page_shield_until:null,storage_retention_days:30};")
+          s=s.replace("'TAKE THE PAGE · $160'","'TAKE THE PAGE · $16'")
+          s=s.replace("length!==8","length!==9")
+          s=s.replace("console.log('PASS TAKEOVER CANVAS V13')","console.log('PASS TAKEOVER CANVAS V15')")
+          p.write_text(s)
+          PY
+      - name: Verify update
+        run: |
+          grep -q 'takeover-v3.js?v=15' .github/workflows/ci.yml
+          grep -q 'takeover-v3.css?v=15' .github/workflows/ci.yml
+          grep -q 'starting_price:1' .github/workflows/ci.yml
+          grep -Fq 'TAKE THE PAGE · $16' .github/workflows/ci.yml
+          grep -q 'length!==9' .github/workflows/ci.yml
+      - name: Commit
+        run: |
+          git config user.name "TAKEOVER Builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/workflows/ci.yml
+          git commit -m "Update permanent smoke test for V15 and one-dollar start"
+          git push
