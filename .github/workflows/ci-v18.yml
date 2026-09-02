@@ -25,7 +25,7 @@ jobs:
           grep -q 'const TOTAL=16' takeover-v3.js
           grep -q 'takeover-v3.js?v=18' boot.js
           grep -q 'takeover-v3.css?v=18' boot.js
-          grep -q 'boot.js?v=14' index.html
+          grep -q 'boot.js?v=15' index.html
           grep -q 'frameCells' takeover-v3.js
           grep -q 'startLayerTouch' takeover-v3.js
           grep -q 'shapeStyle' takeover-v3.js
@@ -78,11 +78,12 @@ jobs:
       - name: Legal copy contract
         run: |
           grep -q 'THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.' auction-rules.html
+          grep -q 'THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.' index.html
           grep -qi 'Future seasons and historical archives' terms.html
+          ! grep -qi 'season' index.html
           ! grep -qi 'season' auction-rules.html
           ! grep -qi 'season' payments.html
           ! grep -qi 'archive' privacy.html
-          grep -q 'Placement has no guaranteed minimum duration or cash value.' boot.js
-          ! grep -q 'Any future voluntary season ending requires' boot.js
-          ! grep -q 'No season end is currently scheduled' boot.js
+          ! grep -qi 'season' boot.js
+          grep -q 'Placement has no guaranteed minimum duration or cash value.' index.html
           echo 'PASS LEGAL COPY CONTRACT'
