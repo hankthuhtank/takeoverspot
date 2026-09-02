@@ -47,8 +47,9 @@ jobs:
       - name: Refund safety regression
         run: |
           grep -q 'refundTerritoryAction' index.html
-          grep -q 'restore_previous' takeover-v3.js
-          grep -q 'vacate_keep_price' takeover-v3.js
+          grep -q 'value="restore_previous"' index.html
+          grep -q 'value="vacate_keep_price"' index.html
+          grep -q 'territory_action:territoryAction' takeover-v3.js
           ! grep -q 'refundResetTerritory' index.html
           ! grep -q 'refundResetTerritory' takeover-v3.js
           ! grep -q 'reset_territory:reset' takeover-v3.js
