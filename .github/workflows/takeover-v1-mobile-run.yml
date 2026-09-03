@@ -1,0 +1,40 @@
+name: TAKEOVER V1.0.1 Mobile Patch
+'on':
+  push:
+    branches: [main]
+    paths: ['.takeover-v1-mobile.py','.github/workflows/takeover-v1-mobile-run.yml']
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply V1.0.1 mobile patch
+        run: python .takeover-v1-mobile.py
+      - name: Verify V1.0.1 runtime
+        run: |
+          node --check takeover-v3.js
+          node --check boot.js
+          grep -q "APP_VERSION='1.0.1'" takeover-v3.js
+          grep -q 'TAKEOVER V1.0.1' takeover-v3.css
+          grep -q 'takeover-v3.js?v=1.0.1' boot.js
+          grep -q 'takeover-v3.css?v=1.0.1' boot.js
+          grep -q 'boot.js?v=1.0.1' index.html
+          grep -q "b.dataset.short" takeover-v3.js
+          grep -q 'editor-content{display:block!important;width:100%' takeover-v3.css
+          grep -q -- '--takeover-board-size:min(140vw' takeover-v3.css
+          grep -q 'overflow-x:auto!important' takeover-v3.css
+      - name: Commit V1.0.1 runtime
+        run: |
+          git config user.name takeover-bot
+          git config user.email takeover-bot@users.noreply.github.com
+          git add takeover-v3.js takeover-v3.css boot.js index.html
+          git commit -m 'TAKEOVER V1.0.1: mobile-first board camera and exact canvas containment' || exit 0
+          git push
