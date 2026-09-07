@@ -18,8 +18,14 @@ The sixteen spots retain one square coordinate system. Header, board controls an
 
 No database schema, payment endpoint, authentication configuration, or ownership rules change in this release. CSS loads in the document head to avoid a mismatched layout during startup.
 
+### Design studio
+
+All former built-in presets are replaced with 32 new editable compositions; 21 include motion. Filter by Animated, Minimal, Bold, Editorial, Technical or Photo. Thumbnails animate on hover/focus; choosing a look opens its live preview. Preview playback can be paused without removing the saved animation. Reduced-motion preferences are respected.
+
+The editor adds undo/redo (40 states, Ctrl/Cmd-Z), a selectable layer list, adjustable gradient colors/angle, and a visible 12-layer limit. Existing private saved designs remain available. Presets adapt type sizing and circular ornaments to the selected territory proportions and use the same schema as existing saved artwork.
+
 ### Validation
 
-`node --test tests/board-layout.test.cjs` covers eleven viewport sizes, wrapped headers, zoom reachability and all sixteen rectangular territory proportions. `tests/interaction-smoke.cjs` uses jsdom 30.0.1 with mocked backend responses to exercise board navigation, combined artwork, preview-to-purchase, editor preview, partial territory loss and paused controls. CI installs that test dependency separately from the frontend.
+`node --test tests/*.test.cjs` covers eleven viewport sizes, wrapped headers, zoom reachability and all sixteen rectangular territory proportions, plus every new preset with short/long names, optional logos and five aspect ratios. `tests/interaction-smoke.cjs` uses jsdom 30.0.1 with mocked backend responses to exercise board navigation, combined artwork, preview-to-purchase, editor preview, partial territory loss and paused controls. CI installs that test dependency separately from the frontend.
 
 These checks validate calculations and DOM behavior; they do not establish pixel-level rendering on Safari/Chrome or verify live Stripe transactions. Review on an actual phone and desktop before production rollout.

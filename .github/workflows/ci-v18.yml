@@ -2,9 +2,9 @@ name: TAKEOVER V1.1.0 Launch Gate
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -20,6 +20,7 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check board-view.js
+          node --check canvas-presets.js
           node --check contact.js
       - name: V1.1.0 architecture
         run: |
@@ -53,7 +54,7 @@ jobs:
           grep -q 'admin_vacate_takeover_spot' takeover-v3.js
           grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
       - name: Cross-device geometry
-        run: node --test tests/board-layout.test.cjs
+        run: node --test tests/*.test.cjs
       - name: Install isolated DOM test dependency
         run: npm install --prefix "$RUNNER_TEMP/takeover-tests" --ignore-scripts --no-audit --no-fund jsdom@30.0.1
       - name: Board and editor interactions
