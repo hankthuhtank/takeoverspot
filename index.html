@@ -12,14 +12,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=Manrope:wght@500;600;700;800&family=Orbitron:wght@400;600;800&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="takeover.css?v=4">
+<link rel="stylesheet" href="takeover-v3.css?v=1.1.0">
 </head>
 <body>
-<main class="board" id="board">
-  <div class="grid-lines" id="gridLines"></div>
-  <div class="territories" id="territories"></div>
-  <div class="spot-actions" id="spotActions"></div>
-  <div class="takeover-reveal-stage" id="takeoverRevealStage" hidden></div>
-  <div class="chrome">
+<div class="board-app">
+<header class="chrome">
     <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>DAILY SNAPSHOT · 12 PM CT</strong><em>X · INSTAGRAM</em></div></div>
     <div class="controls">
       <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
@@ -31,12 +28,37 @@
       <button class="chrome-btn" id="accountBtn">SIGN IN</button>
       <button id="legalBtn" hidden>LEGAL</button>
     </div>
+  </header>
+  <nav class="board-tools" aria-label="Board view">
+    <div class="board-view-switch" role="group" aria-label="Board size">
+      <button id="boardFit" class="active" aria-pressed="true">ALL 16</button>
+      <button id="boardExplore" aria-pressed="false">EXPLORE</button>
+    </div>
+    <span class="board-view-hint" id="boardViewHint">Every spot. One page.</span>
+    <div class="board-zoom" role="group" aria-label="Zoom">
+      <button id="boardZoomOut" aria-label="Zoom out">−</button>
+      <output id="boardZoomLevel" aria-live="polite">100%</output>
+      <button id="boardZoomIn" aria-label="Zoom in">+</button>
+    </div>
+  </nav>
+  <main class="board" id="board" tabindex="0" aria-label="Takeover board. Use arrow keys to pan when zoomed.">
+    <div class="board-space" id="boardSpace">
+      <div class="board-surface" id="boardSurface">
+        <div class="grid-lines" id="gridLines"></div>
+        <div class="territories" id="territories"></div>
+        <div class="spot-actions" id="spotActions"></div>
+        <div class="takeover-reveal-stage" id="takeoverRevealStage" hidden></div>
+      </div>
+    </div>
+  </main>
+  <div class="board-navigator" id="boardNavigator" hidden>
+    <div class="board-map" id="boardMap" role="group" aria-label="Jump to a spot"></div>
+    <div class="board-map-window" id="boardMapWindow"></div>
   </div>
-</main>
-
 <footer class="site-legal" aria-label="Legal">
   <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a><a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X</a><a href="https://www.instagram.com/takeover.spot" target="_blank" rel="noopener">INSTAGRAM</a>
 </footer>
+</div>
 
 <div class="scrim" id="scrim"></div>
 
@@ -206,6 +228,8 @@
 
 <div class="toast" id="toast"></div>
 <script src="vendor/supabase-2.112.4.min.js"></script>
-<script src="boot.js?v=1.0.1"></script>
+<script src="canvas-presets.js?v=1.1.0"></script>
+<script src="board-view.js?v=1.1.0"></script>
+<script src="boot.js?v=1.1.0"></script>
 </body>
 </html>

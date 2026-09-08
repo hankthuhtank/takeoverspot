@@ -1,10 +1,10 @@
-name: TAKEOVER V1.0.1 Launch Gate
+name: TAKEOVER V1.1.0 Launch Gate
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -19,15 +19,17 @@ jobs:
         run: |
           node --check takeover-v3.js
           node --check boot.js
+          node --check board-view.js
+          node --check canvas-presets.js
           node --check contact.js
-      - name: V1.0.1 architecture
+      - name: V1.1.0 architecture
         run: |
           grep -q 'const APP_VERSION=' takeover-v3.js
-          grep -q "APP_VERSION='1.0.1'" takeover-v3.js
+          grep -q "APP_VERSION='1.1.0'" takeover-v3.js
           grep -q 'const TOTAL=16' takeover-v3.js || grep -q "TOTAL=16" takeover-v3.js
-          grep -q 'takeover-v3.js?v=1.0.1' boot.js
-          grep -q 'takeover-v3.css?v=1.0.1' boot.js
-          grep -q 'boot.js?v=1.0.1' index.html
+          grep -q 'takeover-v3.js?v=1.1.0' boot.js
+          grep -q 'takeover-v3.css?v=1.1.0' index.html
+          grep -q 'boot.js?v=1.1.0' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
           ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html
@@ -37,7 +39,7 @@ jobs:
           grep -q 'TAKEOVER V22.2' takeover-v3.css
           grep -q 'TAKEOVER V22.3' takeover-v3.css
           grep -q 'TAKEOVER V1.0 LAUNCH' takeover-v3.css
-          grep -q 'TAKEOVER V1.0.1' takeover-v3.css
+          grep -q 'V1.1 — one board surface' takeover-v3.css
       - name: Core product contracts
         run: |
           grep -q 'frameCells' takeover-v3.js
@@ -51,38 +53,12 @@ jobs:
           grep -q 'admin_set_takeover_spot_price' takeover-v3.js
           grep -q 'admin_vacate_takeover_spot' takeover-v3.js
           grep -q 'admin_hide_takeover_spot_content' takeover-v3.js
-      - name: Cross-device WYSIWYG contract
-        run: |
-          grep -q -- '--takeover-board-size:min(100vw' takeover-v3.css
-          grep -q 'width:var(--takeover-board-size)!important;height:var(--takeover-board-size)!important' takeover-v3.css
-          grep -q 'font-size:var(--layer-size,5cqw)!important' takeover-v3.css
-          grep -q "d.style.setProperty('--layer-size'" takeover-v3.js
-          grep -q "file.type!=='image/jpeg'" takeover-v3.js
-          grep -q 'EXACT PUBLISHED COMPOSITION · MOBILE = DESKTOP' takeover-v3.js
-          grep -q 'frame.style.aspectRatio' takeover-v3.js
-          node - <<'JS'
-          const fs=require('fs'),s=fs.readFileSync('takeover-v3.js','utf8'),c=fs.readFileSync('takeover-v3.css','utf8');
-          if(s.includes('d.style.fontSize=`${clamp(l.size||18,8,200)}px`')) throw Error('editor-only pixel typography returned');
-          if(!c.includes('.territory,.canvas-stage{container-type:size!important}')) throw Error('shared canvas query space missing');
-          if(!c.includes('@media(max-width:720px)')||!c.includes('--takeover-board-size')) throw Error('mobile canonical board contract missing');
-          console.log('PASS CROSS-DEVICE WYSIWYG CONTRACT');
-          JS
-      - name: Mobile-first camera regression
-        run: |
-          grep -q -- '--takeover-board-size:min(140vw' takeover-v3.css
-          grep -q 'overflow-x:auto!important' takeover-v3.css
-          grep -q 'top:54px!important' takeover-v3.css
-          grep -q "b.dataset.short" takeover-v3.js
-          grep -q 'take-pill::after{content:attr(data-short)' takeover-v3.css
-          grep -q 'canvas-stage:not(.is-preview) .editor-layer{animation:none!important}' takeover-v3.css
-          node - <<'JS'
-          const fs=require('fs'),s=fs.readFileSync('takeover-v3.js','utf8'),c=fs.readFileSync('takeover-v3.css','utf8');
-          const editor='.editor-content{display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;max-height:100%!important;overflow:hidden!important';
-          if(!c.includes(editor)) throw Error('editor/live text containment drift returned');
-          if(!c.includes('overscroll-behavior-x:contain!important')) throw Error('mobile board camera no longer pans safely');
-          if(!s.includes("b.setAttribute('aria-label',b.textContent)")) throw Error('compact mobile action lost accessible label');
-          console.log('PASS MOBILE-FIRST CAMERA CONTRACT');
-          JS
+      - name: Cross-device geometry
+        run: node --test tests/*.test.cjs
+      - name: Install isolated DOM test dependency
+        run: npm install --prefix "$RUNNER_TEMP/takeover-tests" --ignore-scripts --no-audit --no-fund jsdom@30.0.1
+      - name: Board and editor interactions
+        run: NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/interaction-smoke.cjs
       - name: Canvas preview regression
         run: |
           grep -q 'toggleCanvasPreview' takeover-v3.js
