@@ -25,10 +25,11 @@ export async function storageReferences(admin) {
     ['takeover_profiles', 'user_id', 'logo_url,feature_image_url', q => q],
     ['takeover_attempts', 'id', 'logo_url,feature_image_url,canvas_json,created_at', q => q.gte('created_at', since)],
     ['takeover_saved_designs', 'id', 'user_id,logo_url,canvas_json', q => q],
+    ['takeover_daily_snapshots', 'snapshot_date', 'board_json', q => q.is('image_path', null)],
     ['takeover_spot_history', 'id', 'logo_url,feature_image_url,canvas_json,created_at', q => q.gte('created_at', since)],
   ];
-  const [spots, profiles, attempts, saved, history] = await Promise.all(sources.map(([table, key, columns, filter]) =>
+  const [spots, profiles, attempts, saved, pendingSnapshots, history] = await Promise.all(sources.map(([table, key, columns, filter]) =>
     readAllRows(() => filter(admin.from(table).select(columns, { count: 'exact' }).order(key)))
   ));
-  return { days, cutoff, spots, profiles, attempts, saved, history };
+  return { days, cutoff, spots, profiles, attempts, saved, history: [...history, ...pendingSnapshots] };
 }

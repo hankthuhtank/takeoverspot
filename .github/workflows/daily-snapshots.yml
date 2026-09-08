@@ -1,0 +1,46 @@
+name: Render daily board snapshots
+on:
+  schedule:
+    # Capture itself is in Postgres at noon; these jobs only render saved records.
+    - cron: '7,22,37,52 17,18 * * *'
+    - cron: '37 0,6,12 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/daily-snapshots.yml','scripts/render-daily-snapshots.cjs','snapshot-render.html','snapshot-render.css']
+permissions:
+  contents: write
+  id-token: write
+concurrency:
+  group: daily-board-snapshots
+  cancel-in-progress: false
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned renderer
+        run: npm install --prefix "$RUNNER_TEMP/snapshot-renderer" --ignore-scripts --no-audit --no-fund playwright@1.55.0 sharp@0.34.3
+      - name: Install Chromium
+        run: "$RUNNER_TEMP/snapshot-renderer/node_modules/.bin/playwright install --with-deps chromium"
+      - name: Render and save pending daily images
+        env:
+          NODE_PATH: ${{ runner.temp }}/snapshot-renderer/node_modules
+        run: node scripts/render-daily-snapshots.cjs
+      - name: Record latest completed date
+        # A tiny daily marker also keeps scheduled workflows active in this public repo.
+        run: |
+          if test -f snapshots/latest.json; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add snapshots/latest.json
+            if ! git diff --cached --quiet; then
+              git commit -m 'Record completed daily snapshot'
+              git pull --rebase origin main
+              git push origin HEAD:main
+            fi
+          fi

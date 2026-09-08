@@ -14,11 +14,13 @@
   const doc=root.document,byId=id=>doc.getElementById(id),board=byId('board');
   if(!board)return;
   const space=byId('boardSpace'),surface=byId('boardSurface'),map=byId('boardMap');
+  let archive=false;
   let zoom=1,mode='fit',layout=null,queued=false,drag=null,suppressClick=false,editorObserved=false;
   const observer=new ResizeObserver(schedule);
   observer.observe(board);
   function schedule(){if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;resize();fitEditor();});}}
   function resize(){
+    if(archive)return;
     const w=board.clientWidth,h=board.clientHeight;
     if(!w||!h)return;
     const cx=layout?(board.scrollLeft+w/2-layout.left)/layout.size:.5;
@@ -44,7 +46,8 @@
     byId('boardViewHint').textContent=enlarged?'Drag to explore · map to jump':'Every spot. One page.';
     updateMap();
   }
-  function setView(next,value){mode=next;zoom=value||zoom;resize();}
+  function showArchive(show){archive=show;byId('dailyArchive').hidden=!show;board.hidden=show;byId('boardNavigator').hidden=true;doc.querySelector('.board-zoom').hidden=show;byId('boardSnapshots')?.classList.toggle('active',show);byId('boardSnapshots')?.setAttribute('aria-pressed',String(show));if(show){for(const id of ['boardFit','boardExplore']){byId(id).classList.remove('active');byId(id).setAttribute('aria-pressed','false');}byId('boardViewHint').textContent='A daily record of the board.';}else{root.TakeoverDailySnapshots?.clear();resize();}}
+  function setView(next,value){if(archive)showArchive(false);mode=next;zoom=value||zoom;resize();}
   byId('boardFit').onclick=()=>setView('fit');
   byId('boardExplore').onclick=()=>setView('explore');
   byId('boardZoomOut').onclick=()=>setView('manual',Math.max(1,zoom-.5));
@@ -98,7 +101,7 @@
     stage.style.setProperty('width',frame.width+'px','important');
     stage.style.setProperty('height',frame.height+'px','important');
   }
-  root.TakeoverBoard={refresh(){
+  root.TakeoverBoard={showArchive,refresh(){
     [...map.children].forEach((b,i)=>{const action=byId('spotActions')?.children[i];b.classList.toggle('is-owned',!!action?.querySelector('.take-pill'));});
     schedule();
   },fitEditor:schedule};

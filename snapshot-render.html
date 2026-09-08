@@ -1,18 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-snapshot-render="true">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src data: https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#f7f7f3">
-<title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
+<title>TAKEOVER snapshot renderer</title><meta name="robots" content="noindex">
 <meta name="description" content="Claim part of the webpage. Make it yours. Keep it until somebody pays more.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=Manrope:wght@500;600;700;800&family=Orbitron:wght@400;600;800&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="takeover.css?v=4">
 <link rel="stylesheet" href="takeover-v3.css?v=1.1.2">
+<link rel="stylesheet" href="snapshot-render.css">
 </head>
 <body>
 <div class="board-app">
@@ -33,7 +34,6 @@
     <div class="board-view-switch" role="group" aria-label="Board size">
       <button id="boardFit" class="active" aria-pressed="true">ALL 16</button>
       <button id="boardExplore" aria-pressed="false">EXPLORE</button>
-      <button id="boardSnapshots" aria-pressed="false">DAILY SNAPSHOTS</button>
     </div>
     <span class="board-view-hint" id="boardViewHint">Every spot. One page.</span>
     <div class="board-zoom" role="group" aria-label="Zoom">
@@ -52,11 +52,6 @@
       </div>
     </div>
   </main>
-  <section id="dailyArchive" class="daily-archive" hidden aria-label="Daily board snapshots">
-    <div class="daily-heading"><div><h1>Daily snapshots</h1><p id="dailyStatus" role="status">One capture every day at noon Central.</p></div><button id="dailyRefresh">REFRESH</button></div>
-    <section id="dailyDetail" class="daily-detail" hidden><div class="daily-heading"><h2 id="dailyTitle"></h2><button id="dailyClose" aria-label="Close snapshot">×</button></div><img id="dailyFullImage" alt="Daily board snapshot"><p id="dailyDetailStatus" role="status"></p><div class="snapshot-actions"><button id="dailyCopy" disabled>COPY IMAGE</button><button id="dailyDownload" disabled>DOWNLOAD PNG</button></div></section>
-    <div id="dailyList" class="daily-list"></div><button id="dailyMore" hidden>LOAD OLDER SNAPSHOTS</button>
-  </section>
   <div class="board-navigator" id="boardNavigator" hidden>
     <div class="board-map" id="boardMap" role="group" aria-label="Jump to a spot"></div>
     <div class="board-map-window" id="boardMapWindow"></div>
@@ -233,22 +228,11 @@
   </div>
 </section>
 
-<section class="panel modal" id="adminAccountModal"><div class="panel-inner">
-  <button class="close" data-close aria-label="Close account controls">×</button><div class="intro-kicker">OWNER ACCOUNT CONTROLS</div>
-  <h2 id="managedAccountEmail">Account</h2><p id="managedAccountStatus" role="status"></p>
-  <label class="field">Admin note (optional)<textarea id="managedAccountNote" maxlength="500" rows="2"></textarea></label>
-  <div class="snapshot-actions"><button class="action" id="managedAccountToggle">DISABLE ACCESS</button></div>
-  <div class="account-delete-zone"><h3>Delete account</h3><p id="managedAccountDeleteHint"></p>
-    <label class="field">Type DELETE to confirm<input id="managedAccountConfirm" autocomplete="off" placeholder="DELETE"></label>
-    <button class="action danger" id="managedAccountDelete" disabled>DELETE ACCOUNT PERMANENTLY</button>
-  </div>
-</div></section>
 <div class="toast" id="toast"></div>
 <script src="vendor/supabase-2.112.4.min.js"></script>
 <script src="canvas-presets.js?v=1.1.2"></script>
-<script src="board-view.js?v=1.1.2"></script>
+
 <script src="vendor/html-to-image-1.11.13.js"></script>
-<script src="daily-snapshots.js?v=1.1.2"></script>
 <script src="board-snapshot.js?v=1.1.2"></script>
 <script src="boot.js?v=1.1.2"></script>
 </body>

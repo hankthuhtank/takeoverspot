@@ -1,10 +1,10 @@
-name: TAKEOVER V1.1.1 Launch Gate
+name: TAKEOVER V1.1.2 Launch Gate
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','daily-snapshots.js','snapshot-render.html','snapshot-render.css','scripts/**','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','daily-snapshots.js','snapshot-render.html','snapshot-render.css','scripts/**','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -21,16 +21,18 @@ jobs:
           node --check boot.js
           node --check board-view.js
           node --check board-snapshot.js
+          node --check daily-snapshots.js
+          node --check scripts/render-daily-snapshots.cjs
           node --check canvas-presets.js
           node --check contact.js
-      - name: V1.1.1 architecture
+      - name: V1.1.2 architecture
         run: |
           grep -q 'const APP_VERSION=' takeover-v3.js
-          grep -q "APP_VERSION='1.1.1'" takeover-v3.js
+          grep -q "APP_VERSION='1.1.2'" takeover-v3.js
           grep -q 'const TOTAL=16' takeover-v3.js || grep -q "TOTAL=16" takeover-v3.js
-          grep -q 'takeover-v3.js?v=1.1.1' boot.js
-          grep -q 'takeover-v3.css?v=1.1.1' index.html
-          grep -q 'boot.js?v=1.1.1' index.html
+          grep -q 'takeover-v3.js?v=1.1.2' boot.js
+          grep -q 'takeover-v3.css?v=1.1.2' index.html
+          grep -q 'boot.js?v=1.1.2' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
           ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html

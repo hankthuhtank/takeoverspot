@@ -24,6 +24,7 @@ const board=d.getElementById('board');
 Object.defineProperties(board,{clientWidth:{value:390,configurable:true},clientHeight:{value:640,configurable:true}});
 w.eval(fs.readFileSync(path.join(root,'board-view.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(root,'canvas-presets.js'),'utf8'));
+w.eval(fs.readFileSync(path.join(root,'daily-snapshots.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(root,'takeover-v3.js'),'utf8'));
 const tick=()=>new Promise(r=>setTimeout(r,70));
 (async()=>{
@@ -43,6 +44,10 @@ const tick=()=>new Promise(r=>setTimeout(r,70));
   d.getElementById('boardFit').click();
   assert.equal(d.getElementById('boardSurface').style.width,'390px');
   assert.equal(d.getElementById('boardNavigator').hidden,true);
+  d.getElementById('boardSnapshots').click();await tick();
+  assert.equal(d.getElementById('dailyArchive').hidden,false);assert.equal(board.hidden,true);
+  assert.match(d.getElementById('dailyStatus').textContent,/first daily snapshot/);
+  d.getElementById('boardFit').click();assert.equal(board.hidden,false);assert.equal(d.getElementById('dailyArchive').hidden,true);
   d.querySelector('.inspect-spot').click();
   assert.ok(d.getElementById('spotPreviewModal').classList.contains('on'));
   assert.equal(d.getElementById('spotPreviewTitle').textContent,'Example Brand');
