@@ -1,10 +1,10 @@
-name: TAKEOVER V1.1.0 Launch Gate
+name: TAKEOVER V1.1.1 Launch Gate
 'on':
   push:
     branches: [main]
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html','.github/workflows/ci-v18.yml']
   pull_request:
-    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
+    paths: ['index.html','takeover-v3.js','takeover-v3.css','takeover.css','boot.js','board-view.js','canvas-presets.js','board-snapshot.js','supabase/**','vendor/html-to-image-1.11.13.js','tests/**','vendor/supabase-2.112.4.min.js','contact.js','contact.html','terms.html','auction-rules.html','payments.html','privacy.html','content-policy.html']
 permissions:
   contents: read
 jobs:
@@ -20,16 +20,17 @@ jobs:
           node --check takeover-v3.js
           node --check boot.js
           node --check board-view.js
+          node --check board-snapshot.js
           node --check canvas-presets.js
           node --check contact.js
-      - name: V1.1.0 architecture
+      - name: V1.1.1 architecture
         run: |
           grep -q 'const APP_VERSION=' takeover-v3.js
-          grep -q "APP_VERSION='1.1.0'" takeover-v3.js
+          grep -q "APP_VERSION='1.1.1'" takeover-v3.js
           grep -q 'const TOTAL=16' takeover-v3.js || grep -q "TOTAL=16" takeover-v3.js
-          grep -q 'takeover-v3.js?v=1.1.0' boot.js
-          grep -q 'takeover-v3.css?v=1.1.0' index.html
-          grep -q 'boot.js?v=1.1.0' index.html
+          grep -q 'takeover-v3.js?v=1.1.1' boot.js
+          grep -q 'takeover-v3.css?v=1.1.1' index.html
+          grep -q 'boot.js?v=1.1.1' index.html
           grep -q 'vendor/supabase-2.112.4.min.js' index.html
           test -s vendor/supabase-2.112.4.min.js
           ! grep -q 'cdn.jsdelivr.net/npm/@supabase/supabase-js@2' index.html
@@ -58,7 +59,9 @@ jobs:
       - name: Install isolated DOM test dependency
         run: npm install --prefix "$RUNNER_TEMP/takeover-tests" --ignore-scripts --no-audit --no-fund jsdom@30.0.1
       - name: Board and editor interactions
-        run: NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/interaction-smoke.cjs
+        run: |
+          NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/interaction-smoke.cjs
+          NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/snapshot-smoke.cjs
       - name: Canvas preview regression
         run: |
           grep -q 'toggleCanvasPreview' takeover-v3.js

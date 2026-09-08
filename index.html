@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src data: https://fonts.gstatic.com; img-src 'self' data: blob: https://xvfgiaxxvwdnmzzdfboc.supabase.co; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://xvfgiaxxvwdnmzzdfboc.supabase.co wss://xvfgiaxxvwdnmzzdfboc.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#f7f7f3">
 <title>TAKEOVER — The webpage belongs to whoever wants it most.</title>
@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=Manrope:wght@500;600;700;800&family=Orbitron:wght@400;600;800&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="takeover.css?v=4">
-<link rel="stylesheet" href="takeover-v3.css?v=1.1.0">
+<link rel="stylesheet" href="takeover-v3.css?v=1.1.1">
 </head>
 <body>
 <div class="board-app">
@@ -157,6 +157,7 @@
       <div class="admin-top"><div><span id="adminSectionKicker">OWNER CONSOLE</span><h2 id="adminSectionTitle">Dashboard</h2></div><button class="admin-refresh" id="adminRefresh">REFRESH</button></div>
 
       <section class="admin-pane active" data-admin-pane="dashboard">
+        <div class="admin-block snapshot-block"><div class="admin-block-head"><div><b>DAILY BOARD SNAPSHOT</b><span>Capture all 16 spots as one image, ready for your social post.</span></div><button class="admin-refresh" id="snapshotCreate" hidden>CREATE SNAPSHOT</button></div><p id="snapshotStatus" role="status">Animations freeze into a still image. Your controls stay out of the picture.</p><img id="snapshotImage" alt="Full TAKEOVER board snapshot" hidden><div class="snapshot-actions"><button class="admin-refresh" id="snapshotCopy" disabled>COPY IMAGE</button><button class="admin-refresh" id="snapshotDownload" disabled>DOWNLOAD PNG</button></div></div>
         <div class="admin-metrics" id="adminOverview"><div class="empty">Loading owner dashboard…</div></div>
         <div class="admin-block"><div class="admin-block-head"><div><b>RECENT OWNER ACTIVITY</b><span>Maintenance and administrative actions.</span></div></div><div id="adminEvents"><div class="empty">No owner activity yet.</div></div></div>
       </section>
@@ -228,8 +229,10 @@
 
 <div class="toast" id="toast"></div>
 <script src="vendor/supabase-2.112.4.min.js"></script>
-<script src="canvas-presets.js?v=1.1.0"></script>
-<script src="board-view.js?v=1.1.0"></script>
-<script src="boot.js?v=1.1.0"></script>
+<script src="canvas-presets.js?v=1.1.1"></script>
+<script src="board-view.js?v=1.1.1"></script>
+<script src="vendor/html-to-image-1.11.13.js"></script>
+<script src="board-snapshot.js?v=1.1.1"></script>
+<script src="boot.js?v=1.1.1"></script>
 </body>
 </html>
