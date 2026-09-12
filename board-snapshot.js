@@ -97,13 +97,12 @@ async function exportSavedBoard(){
   for(const animation of source.getAnimations({subtree:true})){animation.pause();animation.currentTime=1500;}
   const copy=frozenBoard(source),controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),40000);
-  Object.assign(copy.style,{width:'1600px',height:'1600px',position:'fixed',left:'-100000px'});
-  copy.style.setProperty('display','block','important');
-  document.body.appendChild(copy);
+  Object.assign(copy.style,{width:'1600px',height:'1600px',position:'relative',left:'0px'});
+  const holder=document.createElement('div');holder.style.cssText='display:block!important;position:fixed;left:-100000px;top:0;width:1600px;height:1600px;pointer-events:none';holder.appendChild(copy);document.body.appendChild(holder);
   try{
     const [,fontEmbedCSS]=await Promise.all([embedArtwork(copy,controller.signal),embedFonts(copy,controller.signal)]);
     return await abortable(window.htmlToImage.toBlob(copy,{width:1600,height:1600,canvasWidth:1600,canvasHeight:1600,pixelRatio:1,backgroundColor:'#f7f7f3',fontEmbedCSS,skipAutoScale:true,style:{position:'relative',left:'0px'}}),controller.signal);
-  }finally{clearTimeout(timer);controller.abort();copy.remove();}
+  }finally{clearTimeout(timer);controller.abort();holder.remove();}
 }
 window.TakeoverSnapshot={mount,release,exportSavedBoard};
 })();
