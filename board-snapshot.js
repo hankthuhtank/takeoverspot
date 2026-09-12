@@ -23,7 +23,15 @@ function frozenBoard(source){
   const defs=$('#takeoverShapeDefs')?.cloneNode(true),prefix='snapshot-'+generation+'-';
   if(defs){defs.removeAttribute('id');defs.querySelectorAll('[id]').forEach(el=>el.id=prefix+el.id);copy.appendChild(defs);}
   for(const el of [copy,...copy.querySelectorAll('*')]){
-    if(el.style){const clip=el.style.clipPath,match=clip?.match(/#([^"')]+)["']?\)/);if(match)el.style.clipPath='url(#'+prefix+match[1]+')';}
+    if(el.style){const clip=el.style.clipPath,match=clip?.match(/#([^"')]+)["']?\)/);if(match){
+      const definition=document.getElementById(match[1]),rects=definition?.querySelectorAll('rect');
+      if(definition?.getAttribute('clipPathUnits')==='objectBoundingBox'&&rects?.length){
+        const width=parseFloat(el.style.width),height=parseFloat(el.style.height);
+        // Self-contained paths survive SVG/foreignObject export without external IDs.
+        const parts=[...rects].map(rect=>{const x=Number(rect.getAttribute('x'))*width,y=Number(rect.getAttribute('y'))*height,w=Number(rect.getAttribute('width'))*width,h=Number(rect.getAttribute('height'))*height;return `M ${x} ${y} h ${w} v ${h} h ${-w} Z`;});
+        el.style.clipPath='path("'+parts.join(' ')+'")';
+      }else el.style.clipPath='url(#'+prefix+match[1]+')';
+    }}
     if(!el.closest('svg'))el.removeAttribute('id');
   }
   Object.assign(copy.style,{position:'relative',left:'0px',top:'0px',margin:'0px',transform:'none',boxShadow:'none'});

@@ -15,7 +15,7 @@ const server=http.createServer((req,res)=>{try{const name=new URL(req.url,'http:
    const data=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(blob)});
    return {data,calls,elapsed:performance.now()-started,frames:document.querySelectorAll('iframe').length};
   });
-  const bytes=Buffer.from(result.data.split(',')[1],'base64');const meta=await sharp(bytes).metadata();assert.equal(meta.width,1600);assert.equal(meta.height,1600);assert.equal(result.frames,0);assert.deepEqual(result.calls,['takeover_daily_snapshots']);assert.ok(result.elapsed<45000);
+  const bytes=Buffer.from(result.data.split(',')[1],'base64');await fs.promises.mkdir('test-results',{recursive:true});await fs.promises.writeFile('test-results/noon-export.png',bytes);const meta=await sharp(bytes).metadata();assert.equal(meta.width,1600);assert.equal(meta.height,1600);assert.equal(result.frames,0);assert.deepEqual(result.calls,['takeover_daily_snapshots']);assert.ok(result.elapsed<45000);
   const pixel=async(left,top)=>[...(await sharp(bytes).extract({left,top,width:1,height:1}).removeAlpha().raw().toBuffer())];
   assert.deepEqual(await pixel(100,100),[247,247,243],'first tile must not carry hover highlight');
   assert.deepEqual(await pixel(500,100),[18,52,86],'combined artwork must render');
