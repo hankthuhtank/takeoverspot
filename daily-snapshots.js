@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const $=s=>document.querySelector(s),BASE='https://xvfgiaxxvwdnmzzdfboc.supabase.co/storage/v1/object/public/takeover-daily-snapshots/';
-let adminDate=null,adminBusy=false,adminUrl=null;
+let adminDate=null,adminBusy=false,adminUrl=null,adminGeneration=0;
 let client,offset=0,busy=false,sequence=0,selected=null,png=null,url=null;
 function dateLabel(date){return new Intl.DateTimeFormat('en-US',{dateStyle:'long',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z'));}
 function imageUrl(row){return /^\d{4}-\d{2}-\d{2}\.jpg$/.test(row.image_path||'')?BASE+row.image_path:null;}
@@ -23,15 +23,15 @@ async function savedPNG(row){
 }
 async function refreshAdmin(){
   if(adminBusy||document.hidden||!$('#adminPanel')?.classList.contains('on'))return;
-  adminBusy=true;const status=$('#dailyAdminStatus');
+  adminBusy=true;const run=adminGeneration,status=$('#dailyAdminStatus');
   try{
     const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     if(adminDate===today)return;
-    const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path').eq('snapshot_date',today).maybeSingle();
+    const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path').eq('snapshot_date',today).is('deleted_at',null).maybeSingle();
     if(error)throw error;
     if(!data){if(adminUrl){URL.revokeObjectURL(adminUrl);adminUrl=null;adminDate=null;$('#dailyAdminImage').hidden=true;$('#dailyAdminCopy').disabled=true;$('#dailyAdminDownload').disabled=true;}status.textContent='Waiting for today’s noon Central capture. Updates automatically.';return;}
     status.textContent='Noon board saved. Preparing your image…';
-    const blob=await savedPNG(data);if(adminUrl)URL.revokeObjectURL(adminUrl);adminUrl=URL.createObjectURL(blob);adminDate=today;
+    const blob=await savedPNG(data);if(run!==adminGeneration)return;if(adminUrl)URL.revokeObjectURL(adminUrl);adminUrl=URL.createObjectURL(blob);adminDate=today;
     $('#dailyAdminImage').src=adminUrl;$('#dailyAdminImage').hidden=false;
     $('#dailyAdminDownload').disabled=false;$('#dailyAdminDownload').onclick=()=>{const a=document.createElement('a');a.href=adminUrl;a.download='takeover-'+today+'.png';a.click();};
     $('#dailyAdminCopy').disabled=!(window.ClipboardItem&&navigator.clipboard?.write);$('#dailyAdminCopy').onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);status.textContent='Copied. Ready to post.';}catch{status.textContent='Use Download PNG in this browser.';}};
@@ -48,7 +48,7 @@ async function show(row){
 async function load(reset=false){
   if(busy)return;busy=true;const list=$('#dailyList'),more=$('#dailyMore');more.disabled=true;
   if(reset){offset=0;list.replaceChildren();clear();}$('#dailyStatus').textContent='Loading snapshots…';
-  try{const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path,image_bytes').order('snapshot_date',{ascending:false}).range(offset,offset+11);if(error)throw error;
+  try{const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path,image_bytes').is('deleted_at',null).order('snapshot_date',{ascending:false}).range(offset,offset+11);if(error)throw error;
     for(const row of data||[]){const button=document.createElement('button');button.className='daily-card';const src=row.snapshot_date>'2026-09-11'?imageUrl(row):null;const picture=document.createElement(src?'img':'span');
       if(src){picture.src=src;picture.alt='Board on '+dateLabel(row.snapshot_date);picture.loading='lazy';button.onclick=()=>show(row);}else{picture.className='daily-pending';picture.textContent='VIEW NOON BOARD';}
       button.onclick=()=>show(row);
@@ -58,12 +58,44 @@ async function load(reset=false){
     $('#dailyStatus').textContent=offset?'One board. One day. Saved at noon Central.':'The first daily snapshot will appear after the next noon Central capture.';
   }catch{$('#dailyStatus').textContent='Snapshots could not load. Tap Refresh to retry.';}finally{busy=false;more.disabled=false;}
 }
+let manageBusy=false,manageOffset=0;
+function resetToday(){adminGeneration++;adminDate=null;if(adminUrl)URL.revokeObjectURL(adminUrl);adminUrl=null;$('#dailyAdminImage').hidden=true;$('#dailyAdminCopy').disabled=true;$('#dailyAdminDownload').disabled=true;refreshAdmin();}
+async function manage(reset=true){
+  if(manageBusy)return;manageBusy=true;
+  const list=$('#snapshotManageList'),status=$('#snapshotManageStatus'),more=$('#snapshotManageMore'),filter=$('#snapshotManageFilter');
+  more.disabled=true;filter.disabled=true;
+  try{
+    const {data:owner,error:ownerError}=await client.rpc('is_takeover_admin');if(ownerError||owner!==true)throw Error('Owner access required.');
+    if(reset){manageOffset=0;list.replaceChildren();}
+    status.textContent='Loading snapshots…';
+    let query=client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path,deleted_at').order('snapshot_date',{ascending:false});
+    query=filter.value==='trash'?query.not('deleted_at','is',null):query.is('deleted_at',null);
+    const {data,error}=await query.range(manageOffset,manageOffset+19);if(error)throw error;
+    for(const row of data||[]){
+      const item=document.createElement('div');item.className='snapshot-manage-row';
+      const label=document.createElement('div'),date=document.createElement('b'),detail=document.createElement('small');date.textContent=dateLabel(row.snapshot_date);detail.textContent=row.deleted_at?'In Trash · hidden from public archive':'Public archive';label.append(date,detail);
+      const actions=document.createElement('div');actions.className='snapshot-actions';
+      const download=document.createElement('button');download.className='admin-refresh';download.textContent='DOWNLOAD PNG';
+      download.onclick=async()=>{download.disabled=true;status.textContent='Preparing '+dateLabel(row.snapshot_date)+'…';try{const blob=await savedPNG(row);if(!blob)throw Error();const link=URL.createObjectURL(blob),a=document.createElement('a');a.href=link;a.download='takeover-'+row.snapshot_date+'.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(link),60000);status.textContent='Download ready.';}catch{status.textContent='Image could not load. Please try again.';}finally{download.disabled=false;}};
+      const action=document.createElement('button');action.className='admin-refresh';action.textContent=row.deleted_at?'RESTORE':'MOVE TO TRASH';
+      action.onclick=async()=>{
+        if(!row.deleted_at&&!confirm('Move the '+dateLabel(row.snapshot_date)+' snapshot to Trash? It will disappear from the public archive. You can restore it later.'))return;
+        action.disabled=true;
+        try{const {error}=await client.rpc('manage_takeover_snapshot',{p_date:row.snapshot_date,p_action:row.deleted_at?'restore':'trash'});if(error)throw error;resetToday();clear();await manage(true);status.textContent=row.deleted_at?'Snapshot restored to the public archive.':'Snapshot moved to Trash.';}
+        catch(error){status.textContent=error.message||'Could not update snapshot.';action.disabled=false;}
+      };
+      actions.append(download,action);item.append(label,actions);list.appendChild(item);
+    }
+    manageOffset+=(data||[]).length;more.hidden=(data||[]).length<20;status.textContent=manageOffset?'':filter.value==='trash'?'Trash is empty.':'No public snapshots.';
+  }catch(error){status.textContent=error.message||'Could not load snapshots.';}finally{manageBusy=false;more.disabled=false;filter.disabled=false;}
+}
 function mount(sb){client=sb;if(!$('#boardSnapshots')||$('#boardSnapshots').dataset.wired)return;$('#boardSnapshots').dataset.wired='true';
+  if($('#snapshotManageFilter')){$('#snapshotManageFilter').onchange=()=>manage(true);$('#snapshotManageRefresh').onclick=()=>manage(true);$('#snapshotManageMore').onclick=()=>manage(false);}
   const admin=$('#dailyAdminStatus');if(admin){new MutationObserver(refreshAdmin).observe($('#adminPanel'),{attributes:true,attributeFilter:['class']});setInterval(refreshAdmin,10000);document.addEventListener('visibilitychange',refreshAdmin);}
   $('#boardSnapshots').onclick=()=>{window.TakeoverBoard?.showArchive(true);load(true);};
   $('#dailyRefresh').onclick=()=>load(true);$('#dailyMore').onclick=()=>load();$('#dailyClose').onclick=clear;
   $('#dailyCopy').onclick=async()=>{if(!png)return;try{await navigator.clipboard.write([new ClipboardItem({'image/png':png})]);$('#dailyDetailStatus').textContent='Copied. Paste into your social post.';}catch{$('#dailyDetailStatus').textContent='Copy is unavailable in this browser. Use Download PNG.';}};
   $('#dailyDownload').onclick=()=>{if(!url||!selected)return;const a=document.createElement('a');a.href=url;a.download='takeover-'+selected.snapshot_date+'.png';document.body.appendChild(a);a.click();a.remove();};
 }
-window.TakeoverDailySnapshots={mount,clear,savedPNG};
+window.TakeoverDailySnapshots={mount,clear,savedPNG,manage};
 })();

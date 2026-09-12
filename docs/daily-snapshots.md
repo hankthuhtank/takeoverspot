@@ -15,3 +15,6 @@ Admin → Accounts → Manage provides disable, restore, and eligible permanent 
 Permanent deletion requires the target email and explicit DELETE confirmation. Accounts with board ownership, checkout attempts, billing records, legacy bids/wins, or owned uploads must be disabled instead. A database deletion trigger independently prevents deletion of protected accounts. Actions are audited. No existing accounts were disabled or deleted during deployment.
 
 Validation: 66 automated tests, interaction and manual-snapshot smoke checks, rolled-back database checks for owner protection and snapshot immutability, and an anonymous renderer request rejected with HTTP 401. The production render workflow also exercises Chromium, combined artwork, fonts, image dimensions, and JPEG output before processing pending records.
+
+## Snapshot management
+Admin → Snapshots lists the public archive and Trash, with download, Move to Trash and Restore. Trashing is recoverable: it hides the saved record from public queries while retaining the date so the noon scheduler cannot recreate it. Only the verified sole owner can change this state; changes are audited atomically. Public callers cannot read trashed board data or modify snapshots. Existing downloaded copies and previously shared public image URLs are not revoked by Trash.

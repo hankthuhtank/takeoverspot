@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=Manrope:wght@500;600;700;800&family=Orbitron:wght@400;600;800&family=Oswald:wght@400;600;700&family=Pacifico&family=Playfair+Display:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="takeover.css?v=4">
-<link rel="stylesheet" href="takeover-v3.css?v=1.1.2">
+<link rel="stylesheet" href="takeover-v3.css?v=1.1.2-manage-1">
 </head>
 <body>
 <div class="board-app">
@@ -149,6 +149,7 @@
     <aside class="admin-nav">
       <div class="admin-brand"><div><span>OWNER ONLY</span><b>TAKEOVER<br>CONTROL</b></div><button class="close" data-close>×</button></div>
       <button class="admin-tab active" data-admin-tab="dashboard">DASHBOARD</button>
+      <button class="admin-tab" data-admin-tab="snapshots">SNAPSHOTS</button>
       <button class="admin-tab" data-admin-tab="board">LIVE BOARD</button>
       <button class="admin-tab" data-admin-tab="purchases">PURCHASES</button>
       <button class="admin-tab" data-admin-tab="accounts">ACCOUNTS</button>
@@ -167,6 +168,10 @@
         <div class="admin-block snapshot-block"><div class="admin-block-head"><div><b>MANUAL SNAPSHOT</b><span>Capture all 16 spots as one image, ready for your social post.</span></div><button class="admin-refresh" id="snapshotCreate" hidden>CREATE SNAPSHOT</button></div><p id="snapshotStatus" role="status">Animations freeze into a still image. Your controls stay out of the picture.</p><img id="snapshotImage" alt="Full TAKEOVER board snapshot" hidden><div class="snapshot-actions"><button class="admin-refresh" id="snapshotCopy" disabled>COPY IMAGE</button><button class="admin-refresh" id="snapshotDownload" disabled>DOWNLOAD PNG</button></div></div>
         <div class="admin-metrics" id="adminOverview"><div class="empty">Loading owner dashboard…</div></div>
         <div class="admin-block"><div class="admin-block-head"><div><b>RECENT OWNER ACTIVITY</b><span>Maintenance and administrative actions.</span></div></div><div id="adminEvents"><div class="empty">No owner activity yet.</div></div></div>
+      </section>
+
+      <section class="admin-pane" data-admin-pane="snapshots">
+        <div class="admin-block"><div class="admin-block-head"><div><b>DAILY SNAPSHOTS</b><span>Move a capture to Trash to remove it from the public archive. Restore it anytime.</span></div><select id="snapshotManageFilter" aria-label="Snapshot list"><option value="published">PUBLIC ARCHIVE</option><option value="trash">TRASH</option></select><button class="admin-refresh" id="snapshotManageRefresh">REFRESH</button></div><p id="snapshotManageStatus" role="status"></p><div id="snapshotManageList"></div><button class="admin-refresh" id="snapshotManageMore" hidden>LOAD MORE</button></div>
       </section>
 
       <section class="admin-pane" data-admin-pane="board">
@@ -249,8 +254,8 @@
 <script src="canvas-presets.js?v=1.1.2"></script>
 <script src="board-view.js?v=1.1.2"></script>
 <script src="vendor/html-to-image-1.11.13.js"></script>
-<script src="daily-snapshots.js?v=noon-2"></script>
+<script src="daily-snapshots.js?v=manage-1"></script>
 <script src="board-snapshot.js?v=noon-2"></script>
-<script src="boot.js?v=1.1.2-noon-2"></script>
+<script src="boot.js?v=1.1.2-manage-1"></script>
 </body>
 </html>

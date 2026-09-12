@@ -64,6 +64,7 @@ jobs:
         run: |
           NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/interaction-smoke.cjs
           NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/snapshot-smoke.cjs
+          NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/snapshot-management-smoke.cjs
       - name: Install browser export verification
         run: |
           npm install --prefix "$RUNNER_TEMP/snapshot-tests" --ignore-scripts --no-audit --no-fund playwright@1.55.0 sharp@0.34.3
