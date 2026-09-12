@@ -4,3 +4,8 @@ body>*:not(.board-app):not(#takeoverShapeDefs){display:none!important}
 .board-app>*:not(#board){display:none!important}
 #board,#boardSpace,#boardSurface{position:absolute!important;inset:0!important;width:1600px!important;height:1600px!important;margin:0!important;padding:0!important;transform:none!important;box-shadow:none!important;overflow:hidden!important}
 #boardSurface .take-pill,#boardSurface .inspect-spot,#boardSurface .territory-outline{display:none!important}
+
+/* Export surfaces never carry pointer, focus or keyboard-selection styling. */
+#boardSurface,#boardSurface *{pointer-events:none!important;transition:none!important}
+#boardSurface .available-cell{background:transparent!important;outline:none!important;box-shadow:none!important;color:#777!important}
+#boardSurface .available-cell b{text-decoration:none!important}
