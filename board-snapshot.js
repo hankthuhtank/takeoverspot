@@ -18,6 +18,7 @@ function frozenBoard(source){
     to.removeAttribute('href');to.removeAttribute('tabindex');
   }
   copy.querySelectorAll(OMIT).forEach(el=>el.remove());
+  copy.querySelectorAll('.available-cell').forEach(el=>{el.style.setProperty('background','transparent','important');el.style.setProperty('outline','none','important');el.style.setProperty('box-shadow','none','important');el.querySelector('b')?.style.setProperty('text-decoration','none','important');});
   // Combined territories use SVG masks outside the live board. Bring them along.
   const defs=$('#takeoverShapeDefs')?.cloneNode(true),prefix='snapshot-'+generation+'-';
   if(defs){defs.removeAttribute('id');defs.querySelectorAll('[id]').forEach(el=>el.id=prefix+el.id);copy.appendChild(defs);}
@@ -80,5 +81,21 @@ function mount(settings){
   $('#snapshotCopy').onclick=async()=>{if(!blob)return;try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);status('Image copied. Paste it into your social post.');}catch{status('This browser could not copy the image. Use Download PNG, then attach it to your post.');}};
   $('#snapshotDownload').onclick=()=>{if(!objectUrl)return;const a=document.createElement('a');a.href=objectUrl;a.download=filename;document.body.appendChild(a);a.click();a.remove();};
 }
-window.TakeoverSnapshot={mount,release};
+async function exportSavedBoard(){
+  if(document.documentElement.dataset.snapshotRender!=='true')throw new Error('Saved-board renderer required');
+  await document.fonts.ready;
+  const source=$('#boardSurface');
+  await Promise.all([...source.querySelectorAll('img')].map(image=>image.decode()));
+  for(const animation of source.getAnimations({subtree:true})){animation.pause();animation.currentTime=1500;}
+  const copy=frozenBoard(source),controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),40000);
+  Object.assign(copy.style,{width:'1600px',height:'1600px',position:'fixed',left:'-100000px'});
+  copy.style.setProperty('display','block','important');
+  document.body.appendChild(copy);
+  try{
+    const [,fontEmbedCSS]=await Promise.all([embedArtwork(copy,controller.signal),embedFonts(copy,controller.signal)]);
+    return await abortable(window.htmlToImage.toBlob(copy,{width:1600,height:1600,canvasWidth:1600,canvasHeight:1600,pixelRatio:1,backgroundColor:'#f7f7f3',fontEmbedCSS,skipAutoScale:true,style:{position:'relative',left:'0px'}}),controller.signal);
+  }finally{clearTimeout(timer);controller.abort();copy.remove();}
+}
+window.TakeoverSnapshot={mount,release,exportSavedBoard};
 })();

@@ -1,12 +1,13 @@
 (()=>{'use strict';
 const SUPA_URL='https://xvfgiaxxvwdnmzzdfboc.supabase.co';
 const SUPA_KEY='sb_publishable_ShdZijibR7b6EvowZ1yN9Q_dIkGmcCZ';
-const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{storageKey:'takeover-auth-v1',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{storageKey:'takeover-auth-v1',persistSession:document.documentElement.dataset.snapshotRender!=='true',autoRefreshToken:document.documentElement.dataset.snapshotRender!=='true',detectSessionInUrl:document.documentElement.dataset.snapshotRender!=='true'}});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const cash=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(n||0));
 const APP_VERSION='1.1.2',TOTAL=16,COLS=4,ROWS=4;document.documentElement.dataset.takeoverVersion=APP_VERSION;
 const boardCols='spot_number,current_price,owner_key,company_name,website,logo_url,creative_id,canvas_json,owner_since,updated_at';
+let snapshotTime=null;
 let session=null,profile=null,isAdmin=false,spots=[],config={starting_price:10,min_increment:1,purchases_enabled:false,page_shield_until:null,storage_retention_days:30};
 let mode='takeover',selected=[],bidLevels={},seedSpot=null,selectedLogoUrl=null,currentCanvas=null,toastTimer=null,boardPoll=null,noticeChannel=null,savedDesigns=[],logoExplicitlyRemoved=false;
 let editorCanvas=null,editorCreativeId=null,editorContext='purchase',editorSelected=null,editorCompany='',editorWebsite='',moderationSpot=null,refundAttempt=null,lastImpressionKey='',adminHistorySpot='all',adminControlSpot=null;
@@ -54,7 +55,7 @@ async function hydrateLocalRef(ref){if(!String(ref||'').startsWith(LOCAL_ASSET_P
 async function hydrateCanvasAssets(canvas){if(!canvas||typeof canvas!=='object')return;const refs=[];if(canvas.bg?.image)refs.push(canvas.bg.image);for(const l of canvas.layers||[])if(l?.src)refs.push(l.src);await Promise.all([...new Set(refs)].filter(x=>String(x).startsWith(LOCAL_ASSET_PREFIX)).map(hydrateLocalRef))}
 function clamp(n,a,b){return Math.max(a,Math.min(b,Number(n)||0))}
 function uid(){return crypto.randomUUID()}
-function shieldActive(){return !!config.page_shield_until&&new Date(config.page_shield_until).getTime()>Date.now()}
+function shieldActive(){return !!config.page_shield_until&&new Date(config.page_shield_until).getTime()>(snapshotTime??Date.now())}
 function ownsWholePage(){return spots.length===TOTAL&&spots.every(s=>own(s))}
 let previewSpotNumber=null,previewSignature='';
 function openSpotPreview(n){
@@ -346,7 +347,7 @@ async function loadState(){const arrivedHandoff=new URLSearchParams(location.sea
 if(document.documentElement.dataset.snapshotRender==='true'){
   window.TakeoverArchiveRender={render(record){
     if(!Array.isArray(record.board_json)||record.board_json.length!==TOTAL)throw new Error('Incomplete daily snapshot');
-    spots=record.board_json;config={...config,...record.config_json,purchases_enabled:false};profile=null;session=null;
+    snapshotTime=Date.parse(record.captured_at)||Date.now();spots=record.board_json;config={...config,...record.config_json,purchases_enabled:false};profile=null;session=null;
     renderBoard();
     $('#spotActions').querySelectorAll('.take-pill,.inspect-spot').forEach(el=>el.remove());
     document.documentElement.dataset.snapshotReady='true';

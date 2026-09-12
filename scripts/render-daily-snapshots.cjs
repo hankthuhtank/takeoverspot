@@ -19,6 +19,7 @@ async function main(){
     await page.route('**/*',route=>{const url=new URL(route.request().url());const allowed=url.origin===origin||['https://fonts.googleapis.com','https://fonts.gstatic.com'].includes(url.origin)||(url.origin==='https://xvfgiaxxvwdnmzzdfboc.supabase.co'&&url.pathname.startsWith('/storage/v1/object/public/'));return allowed?route.continue():route.abort();});
     await page.goto(origin+'/snapshot-render.html',{waitUntil:'load',timeout:90000});
     await page.waitForFunction(()=>!!window.TakeoverArchiveRender);
+    await page.mouse.move(-10,-10);
     async function render(record){
       await page.evaluate(async row=>{
         window.TakeoverArchiveRender.render(row);await document.fonts.ready;

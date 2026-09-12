@@ -163,7 +163,8 @@
       <div class="admin-top"><div><span id="adminSectionKicker">OWNER CONSOLE</span><h2 id="adminSectionTitle">Dashboard</h2></div><button class="admin-refresh" id="adminRefresh">REFRESH</button></div>
 
       <section class="admin-pane active" data-admin-pane="dashboard">
-        <div class="admin-block snapshot-block"><div class="admin-block-head"><div><b>DAILY BOARD SNAPSHOT</b><span>Capture all 16 spots as one image, ready for your social post.</span></div><button class="admin-refresh" id="snapshotCreate" hidden>CREATE SNAPSHOT</button></div><p id="snapshotStatus" role="status">Animations freeze into a still image. Your controls stay out of the picture.</p><img id="snapshotImage" alt="Full TAKEOVER board snapshot" hidden><div class="snapshot-actions"><button class="admin-refresh" id="snapshotCopy" disabled>COPY IMAGE</button><button class="admin-refresh" id="snapshotDownload" disabled>DOWNLOAD PNG</button></div></div>
+        <div class="admin-block snapshot-block"><div class="admin-block-head"><b>TODAY’S NOON SNAPSHOT</b></div><p id="dailyAdminStatus" role="status">Loads automatically when the noon Central board is saved.</p><img id="dailyAdminImage" alt="Today’s saved noon board" hidden><div class="snapshot-actions"><button class="admin-refresh" id="dailyAdminCopy" disabled>COPY IMAGE</button><button class="admin-refresh" id="dailyAdminDownload" disabled>DOWNLOAD PNG</button></div></div>
+        <div class="admin-block snapshot-block"><div class="admin-block-head"><div><b>MANUAL SNAPSHOT</b><span>Capture all 16 spots as one image, ready for your social post.</span></div><button class="admin-refresh" id="snapshotCreate" hidden>CREATE SNAPSHOT</button></div><p id="snapshotStatus" role="status">Animations freeze into a still image. Your controls stay out of the picture.</p><img id="snapshotImage" alt="Full TAKEOVER board snapshot" hidden><div class="snapshot-actions"><button class="admin-refresh" id="snapshotCopy" disabled>COPY IMAGE</button><button class="admin-refresh" id="snapshotDownload" disabled>DOWNLOAD PNG</button></div></div>
         <div class="admin-metrics" id="adminOverview"><div class="empty">Loading owner dashboard…</div></div>
         <div class="admin-block"><div class="admin-block-head"><div><b>RECENT OWNER ACTIVITY</b><span>Maintenance and administrative actions.</span></div></div><div id="adminEvents"><div class="empty">No owner activity yet.</div></div></div>
       </section>
@@ -248,8 +249,8 @@
 <script src="canvas-presets.js?v=1.1.2"></script>
 <script src="board-view.js?v=1.1.2"></script>
 <script src="vendor/html-to-image-1.11.13.js"></script>
-<script src="daily-snapshots.js?v=1.1.2"></script>
-<script src="board-snapshot.js?v=1.1.2"></script>
-<script src="boot.js?v=1.1.2"></script>
+<script src="daily-snapshots.js?v=noon-2"></script>
+<script src="board-snapshot.js?v=noon-2"></script>
+<script src="boot.js?v=1.1.2-noon-2"></script>
 </body>
 </html>

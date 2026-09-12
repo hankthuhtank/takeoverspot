@@ -64,6 +64,20 @@ jobs:
         run: |
           NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/interaction-smoke.cjs
           NODE_PATH="$RUNNER_TEMP/takeover-tests/node_modules" node tests/snapshot-smoke.cjs
+      - name: Install browser export verification
+        run: |
+          npm install --prefix "$RUNNER_TEMP/snapshot-tests" --ignore-scripts --no-audit --no-fund playwright@1.55.0 sharp@0.34.3
+          "$RUNNER_TEMP/snapshot-tests/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Verify saved-noon PNG in Chromium
+        env:
+          NODE_PATH: ${{ runner.temp }}/snapshot-tests/node_modules
+        run: node tests/snapshot-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verified-noon-snapshot
+          path: test-results/noon-export.png
+          if-no-files-found: ignore
       - name: Canvas preview regression
         run: |
           grep -q 'toggleCanvasPreview' takeover-v3.js
