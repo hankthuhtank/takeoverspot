@@ -27,9 +27,9 @@ async function refreshAdmin(){
   try{
     const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Chicago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     if(adminDate===today)return;
-    const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path').eq('snapshot_date',today).is('deleted_at',null).maybeSingle();
+    const {data,error}=await client.from('takeover_daily_snapshots').select('snapshot_date,captured_at,image_path,deleted_at').eq('snapshot_date',today).maybeSingle();
     if(error)throw error;
-    if(!data){if(adminUrl){URL.revokeObjectURL(adminUrl);adminUrl=null;adminDate=null;$('#dailyAdminImage').hidden=true;$('#dailyAdminCopy').disabled=true;$('#dailyAdminDownload').disabled=true;}status.textContent='Waiting for today’s noon Central capture. Updates automatically.';return;}
+    if(!data||data.deleted_at){if(adminUrl){URL.revokeObjectURL(adminUrl);adminUrl=null;adminDate=null;$('#dailyAdminImage').hidden=true;$('#dailyAdminCopy').disabled=true;$('#dailyAdminDownload').disabled=true;}status.textContent=data?.deleted_at?'Today’s noon snapshot is in Trash. Restore it under Snapshots.':'Waiting for today’s noon Central capture. Updates automatically.';return;}
     status.textContent='Noon board saved. Preparing your image…';
     const blob=await savedPNG(data);if(run!==adminGeneration)return;if(adminUrl)URL.revokeObjectURL(adminUrl);adminUrl=URL.createObjectURL(blob);adminDate=today;
     $('#dailyAdminImage').src=adminUrl;$('#dailyAdminImage').hidden=false;
