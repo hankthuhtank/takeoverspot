@@ -1,5 +1,7 @@
 name: Temporary Piktoor macOS Build
 on:
+  issues:
+    types: [opened]
   push:
     branches: [main]
     paths: ['.github/workflows/piktoor-mac-temp.yml']
