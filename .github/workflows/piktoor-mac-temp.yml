@@ -1,0 +1,158 @@
+name: Temporary Piktoor macOS Build
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/piktoor-mac-temp.yml']
+permissions:
+  contents: read
+jobs:
+  piktoor-mac:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Download current Piktoor
+        shell: bash
+        run: |
+          set -euo pipefail
+          JSON="$(curl -fsSL 'https://safisolutions-downloads.safisolutions.workers.dev/api/free-download?product=piktoor')"
+          URL="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["url"])' <<<"$JSON")"
+          curl -fL "$URL" -o Piktoor.exe
+          shasum -a 256 Piktoor.exe
+      - name: Extract embedded application
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import struct, pathlib, zipfile
+          p=pathlib.Path('Piktoor.exe').read_bytes()
+          e=p.rfind(b'PK\x05\x06')
+          if e < 0: raise SystemExit('No embedded ZIP found')
+          sig,disk,cd_disk,n_disk,n_total,cd_size,cd_off,comment_len=struct.unpack_from('<4s4H2LH',p,e)
+          start=e-cd_size-cd_off
+          z=pathlib.Path('payload.zip')
+          z.write_bytes(p[start:e+22+comment_len])
+          with zipfile.ZipFile(z) as f: f.extractall('payload')
+          PY
+      - name: Apply macOS compatibility patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path('payload/resources/app/main.cjs')
+          s=f.read_text()
+          s=s.replace("const { app, BrowserWindow, dialog, ipcMain, clipboard, ClipboardItem, nativeImage, shell } = require('electron');",
+                      "const { app, BrowserWindow, dialog, ipcMain, clipboard, nativeImage, shell } = require('electron');")
+          s=s.replace("  const iconPath = path.join(__dirname, 'Piktoor.ico');",
+                      "  const iconPath = path.join(__dirname, process.platform === 'darwin' ? 'Piktoor.png' : 'Piktoor.ico');")
+          start=s.index("ipcMain.handle('piktoor:clipboardWriteImage'")
+          end=s.index("ipcMain.handle('piktoor:fonts'")
+          clip="""ipcMain.handle('piktoor:clipboardWriteImage', async (_event, value = {}) => {
+  const image = nativeImage.createFromDataURL(String(value.dataUrl || ''));
+  if (image.isEmpty()) throw new Error('Piktoor could not place that image on the system clipboard.');
+  clipboard.writeImage(image);
+  clipboard.writeBuffer(CUSTOM_CLIPBOARD, Buffer.from(String(value.token || ''), 'utf8'));
+  return true;
+});
+ipcMain.handle('piktoor:clipboardMarkInternal', async (_event, token) => {
+  clipboard.writeBuffer(CUSTOM_CLIPBOARD, Buffer.from(String(token || ''), 'utf8'));
+  return true;
+});
+ipcMain.handle('piktoor:clipboardRead', async () => {
+  const formats = clipboard.availableFormats();
+  let token = null, dataUrl = null;
+  try {
+    const b = clipboard.readBuffer(CUSTOM_CLIPBOARD);
+    if (b && b.length) token = b.toString('utf8');
+  } catch {}
+  try {
+    const image = clipboard.readImage();
+    if (image && !image.isEmpty()) dataUrl = image.toDataURL();
+  } catch {}
+  return { token, dataUrl, formats };
+});
+
+"""
+          s=s[:start]+clip+s[end:]
+          s=s.replace("app.whenReady().then(createWindow);\napp.on('window-all-closed', () => app.quit());",
+"""app.on('open-file', (event, file) => {
+  event.preventDefault();
+  if (file && isSupported(file)) sendOpen(file);
+});
+app.whenReady().then(createWindow);
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});""")
+          f.write_text(s)
+          ui=Path('payload/resources/app/web/src/main.js')
+          ui.write_text(ui.read_text().replace('Windows clipboard','system clipboard'))
+          PY
+      - name: Download Electron Mac runtimes
+        shell: bash
+        run: |
+          set -euo pipefail
+          VER="$(cat payload/version)"
+          curl -fL "https://github.com/electron/electron/releases/download/v${VER}/electron-v${VER}-darwin-arm64.zip" -o arm64.zip
+          curl -fL "https://github.com/electron/electron/releases/download/v${VER}/electron-v${VER}-darwin-x64.zip" -o x64.zip
+          unzip -q arm64.zip -d arm64
+          unzip -q x64.zip -d x64
+      - name: Prepare architecture apps
+        shell: bash
+        run: |
+          set -euo pipefail
+          for ARCH in arm64 x64; do
+            mv "$ARCH/Electron.app" "Piktoor-${ARCH}.app"
+            mv "Piktoor-${ARCH}.app/Contents/MacOS/Electron" "Piktoor-${ARCH}.app/Contents/MacOS/Piktoor"
+            rm -rf "Piktoor-${ARCH}.app/Contents/Resources/default_app.asar"
+            mkdir -p "Piktoor-${ARCH}.app/Contents/Resources/app"
+            cp -R payload/resources/app/. "Piktoor-${ARCH}.app/Contents/Resources/app/"
+            PLIST="Piktoor-${ARCH}.app/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable Piktoor" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleName Piktoor" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Piktoor" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.safisolutions.piktoor" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.0" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1.0.0" "$PLIST"
+            chmod +x "Piktoor-${ARCH}.app/Contents/MacOS/Piktoor"
+          done
+      - name: Merge universal app
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install --silent @electron/universal
+          node - <<'NODE'
+          const { makeUniversalApp } = require('@electron/universal');
+          (async()=>{await makeUniversalApp({
+            x64AppPath:'Piktoor-x64.app',
+            arm64AppPath:'Piktoor-arm64.app',
+            outAppPath:'Piktoor.app',
+            force:true
+          });})().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+          echo "Architectures: $(lipo -archs Piktoor.app/Contents/MacOS/Piktoor)"
+          codesign --force --deep --sign - Piktoor.app
+          codesign --verify --deep --strict Piktoor.app
+      - name: Package ZIP and DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          ditto -c -k --sequesterRsrc --keepParent Piktoor.app "Piktoor Mac.zip"
+          mkdir dmgroot
+          cp -R Piktoor.app dmgroot/
+          ln -s /Applications dmgroot/Applications
+          hdiutil create -volname Piktoor -srcfolder dmgroot -ov -format UDZO "Piktoor Mac.dmg"
+          hdiutil verify "Piktoor Mac.dmg"
+          unzip -t "Piktoor Mac.zip" >/dev/null
+          shasum -a 256 "Piktoor Mac.zip" "Piktoor Mac.dmg"
+      - name: Upload deliverables
+        uses: actions/upload-artifact@v4
+        with:
+          name: Piktoor-Mac-Deliverables
+          retention-days: 7
+          compression-level: 0
+          path: |
+            Piktoor.app
+            Piktoor Mac.zip
+            Piktoor Mac.dmg
