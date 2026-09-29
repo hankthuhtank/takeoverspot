@@ -405,7 +405,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 .impact-header-copy{
   flex:1 1 520px;
-  min-width:260px;
+  min-width:0;
   max-width:760px;
   margin:0 18px;
   color:#6d6d66;
