@@ -42,6 +42,10 @@
       <button id="boardZoomIn" aria-label="Zoom in">+</button>
     </div>
   </nav>
+  <section class="impact-strip" aria-label="TAKEOVER impact mission">
+    <p><strong>TAKEOVER exists to fund direct help for people in need. I take no personal profit from TAKEOVER.</strong> After payment processing, taxes, and essential operating costs, the remaining proceeds go toward helping people directly.</p>
+    <button type="button" id="impactLeaderboardBtn">IMPACT LEADERBOARD</button>
+  </section>
   <main class="board" id="board" tabindex="0" aria-label="Takeover board. Use arrow keys to pan when zoomed.">
     <div class="board-space" id="boardSpace">
       <div class="board-surface" id="boardSurface">
@@ -80,6 +84,15 @@
       <div class="rule"><b>4 · Take all sixteen to own the page.</b><span>A full-page takeover is exclusive for 24 hours. After the shield expires, it lasts until somebody breaks it by taking one spot back.</span></div>
     </div>
     <button class="action" id="introGotIt">I GET IT</button>
+  </div>
+</section>
+
+<section class="panel modal impact-modal" id="impactModal">
+  <div class="panel-inner">
+    <div class="panel-head"><div><span>TAKEOVER IMPACT</span><h2>Impact Leaderboard</h2></div><button class="close" data-close>×</button></div>
+    <p class="impact-modal-copy">TAKEOVER exists to fund direct help for people in need. I take no personal profit from TAKEOVER. After payment processing, taxes, and essential operating costs, the remaining proceeds go toward helping people directly.</p>
+    <div class="impact-leaderboard" id="impactLeaderboard" aria-live="polite"><div class="impact-empty">Loading impact…</div></div>
+    <p class="impact-note">Leaderboard totals reflect completed TAKEOVER purchases after successful refunds. Payments purchase advertising space and are not represented as tax-deductible charitable donations.</p>
   </div>
 </section>
 
