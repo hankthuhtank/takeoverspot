@@ -294,7 +294,7 @@ async function loadImpactLeaderboard(){
   if(!rows.length){box.innerHTML='<div class="impact-empty">No qualifying impact purchases yet. The first name on this board is still waiting.</div>';return}
   box.innerHTML=rows.map(r=>`<div class="impact-row"><span class="impact-rank">#${String(r.rank).padStart(2,'0')}</span><span class="impact-name">${esc(r.display_name||'ANONYMOUS')}</span><span class="impact-amount">${cash(r.amount||0)}</span></div>`).join('');
 }
-$('.impact-leaderboard-trigger').forEach(b=>b.onclick=async()=>{openPanel('#impactModal');await loadImpactLeaderboard()});
+if($('#impactLeaderboardBtn'))$('#impactLeaderboardBtn').onclick=async()=>{openPanel('#impactModal');await loadImpactLeaderboard()};
 
 if($('#introGotIt'))$('#introGotIt').onclick=()=>{localStorage.setItem('takeover_intro_v2','1');closePanels()};if($('#rulesBtn'))$('#rulesBtn').onclick=()=>openPanel('#rulesModal');if($('#legalBtn'))$('#legalBtn').onclick=()=>openPanel('#rulesModal');
 function setAdminTab(name){$$('[data-admin-tab]').forEach(b=>b.classList.toggle('active',b.dataset.adminTab===name));$$('[data-admin-pane]').forEach(p=>p.classList.toggle('active',p.dataset.adminPane===name));const titles={snapshots:'Snapshots',dashboard:'Dashboard',board:'Live board',purchases:'Purchases',accounts:'Accounts',support:'Support',storage:'Storage',security:'Security',settings:'Settings',moderation:'Moderation / audit'};if($('#adminSectionTitle'))$('#adminSectionTitle').textContent=titles[name]||'Owner console';if(name==='snapshots')window.TakeoverDailySnapshots?.manage();if(name==='accounts')renderAdminAccounts();if(name==='support')renderAdminSupport();if(name==='storage')renderAdminStorage();}
