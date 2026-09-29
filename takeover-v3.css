@@ -361,3 +361,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #adminAccountModal{z-index:110;width:min(620px,calc(100vw - 24px))}#managedAccountEmail{overflow-wrap:anywhere;font-size:24px}.account-delete-zone{margin-top:24px;padding-top:20px;border-top:1px solid #ddc9c3}.account-delete-zone p{font-size:14px;line-height:1.55;color:#685c54}.account-delete-zone .danger{background:#913d32;color:white}.account-delete-zone button:disabled{opacity:.35;cursor:not-allowed}.owner-protected{font-size:11px;color:#64715a}.account-row>.tiny{min-height:40px;margin:8px}
 
 .snapshot-manage-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid #d6dbd0}.snapshot-manage-row b{font-size:16px}.snapshot-manage-row small{display:block;margin-top:5px;font-size:13px;color:#66705f}#snapshotManageFilter{padding:10px;background:#fff;color:#172415;border:1px solid #cbd1c4;border-radius:5px;font-size:14px}@media(max-width:600px){.snapshot-manage-row{align-items:flex-start;flex-direction:column}}
+
+
+/* TAKEOVER IMPACT */
+.board-app{grid-template-rows:auto auto auto minmax(0,1fr) auto!important}
+.impact-strip{display:flex;align-items:center;gap:18px;padding:9px 20px;background:#111;color:#fff;border-bottom:1px solid #000;z-index:13}
+.impact-strip p{margin:0;flex:1;font:500 11px/1.5 Manrope,Arial,sans-serif;letter-spacing:-.005em}
+.impact-strip p strong{font-weight:800}
+.impact-strip button{flex:0 0 auto;min-height:38px;padding:8px 12px;border:1px solid #fff;background:#fff;color:#111;border-radius:5px;font:800 10px/1.2 'DM Mono',monospace;cursor:pointer}
+.impact-strip button:hover{background:#deded8;border-color:#deded8}
+.impact-modal{width:min(720px,calc(100vw - 24px))!important}
+.impact-modal-copy{margin:0 0 20px;font-size:16px;line-height:1.65;color:#30312d}
+.impact-leaderboard{border:1px solid #d4d6cc;border-radius:9px;overflow:hidden;background:#fff}
+.impact-row{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #e2e3dc}
+.impact-row:last-child{border-bottom:0}
+.impact-rank{font:800 12px 'DM Mono',monospace;color:#7c7e74}
+.impact-name{min-width:0;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.impact-amount{font:800 14px 'DM Mono',monospace;color:#172415;white-space:nowrap}
+.impact-empty{padding:22px;text-align:center;color:#73766b;font-size:14px}
+.impact-note{margin:14px 0 0;color:#74766d;font-size:11px;line-height:1.55}
+@media(max-width:760px){
+  .impact-strip{align-items:flex-start;gap:10px;padding:9px 10px}
+  .impact-strip p{font-size:10px;line-height:1.4}
+  .impact-strip button{min-height:36px;padding:7px 9px;font-size:9px}
+}
+@media(max-width:520px){
+  .impact-strip{display:grid;grid-template-columns:1fr}
+  .impact-strip button{width:100%}
+  .impact-row{grid-template-columns:42px minmax(0,1fr) auto;padding:12px 10px;gap:8px}
+  .impact-name{font-size:13px}.impact-amount{font-size:12px}
+}
