@@ -18,10 +18,12 @@
 <div class="board-app">
 <header class="chrome">
     <div class="identity"><b>TAKEOVER</b><span>THE WEBPAGE BELONGS TO WHOEVER WANTS IT MOST.</span><div class="social-pulse"><i></i><strong>DAILY SNAPSHOT · 12 PM CT</strong><em>X · INSTAGRAM</em></div></div>
+    <p class="impact-header-copy">TAKEOVER exists to fund direct help for people in need. I take no personal profit from TAKEOVER. After payment processing, taxes, and essential operating costs, the remaining proceeds go toward helping people directly.</p>
     <div class="controls">
       <span class="chrome-btn" id="pauseFlag" hidden>PURCHASES PAUSED</span>
       <span class="chrome-btn primary" id="shieldFlag" hidden>FULL TAKEOVER PROTECTED</span>
       <button class="chrome-btn primary" id="takePageBtn">TAKE THE PAGE</button>
+      <button class="chrome-btn impact-mobile-btn impact-leaderboard-trigger" type="button">IMPACT LEADERBOARD</button>
       <button class="chrome-btn" id="rulesBtn">RULES</button>
       <button class="chrome-btn alert" id="alertBtn" hidden>ALERTS <span class="badge" id="alertBadge" hidden>0</span></button>
       <button class="chrome-btn" id="adminBtn" hidden>ADMIN</button>
@@ -34,6 +36,7 @@
       <button id="boardFit" class="active" aria-pressed="true">ALL 16</button>
       <button id="boardExplore" aria-pressed="false">EXPLORE</button>
       <button id="boardSnapshots" aria-pressed="false">DAILY SNAPSHOTS</button>
+      <button class="impact-desktop-btn impact-leaderboard-trigger" type="button">IMPACT LEADERBOARD</button>
     </div>
     <span class="board-view-hint" id="boardViewHint">Every spot. One page.</span>
     <div class="board-zoom" role="group" aria-label="Zoom">
@@ -42,10 +45,6 @@
       <button id="boardZoomIn" aria-label="Zoom in">+</button>
     </div>
   </nav>
-  <section class="impact-strip" aria-label="TAKEOVER impact mission">
-    <p><strong>TAKEOVER exists to fund direct help for people in need. I take no personal profit from TAKEOVER.</strong> After payment processing, taxes, and essential operating costs, the remaining proceeds go toward helping people directly.</p>
-    <button type="button" id="impactLeaderboardBtn">IMPACT LEADERBOARD</button>
-  </section>
   <main class="board" id="board" tabindex="0" aria-label="Takeover board. Use arrow keys to pan when zoomed.">
     <div class="board-space" id="boardSpace">
       <div class="board-surface" id="boardSurface">
@@ -66,6 +65,7 @@
     <div class="board-map-window" id="boardMapWindow"></div>
   </div>
 <footer class="site-legal" aria-label="Legal">
+  <p class="impact-mobile-copy">TAKEOVER exists to fund direct help for people in need. I take no personal profit from TAKEOVER. After payment processing, taxes, and essential operating costs, the remaining proceeds go toward helping people directly.</p>
   <a href="terms.html">TERMS</a><a href="privacy.html">PRIVACY</a><a href="auction-rules.html">RULES</a><a href="payments.html">PAYMENTS</a><a href="content-policy.html">AD POLICY</a><a href="copyright.html">COPYRIGHT</a><a href="contact.html">REPORT / CONTACT</a><a href="https://x.com/takeoverspot" target="_blank" rel="noopener">X</a><a href="https://www.instagram.com/takeover.spot" target="_blank" rel="noopener">INSTAGRAM</a>
 </footer>
 </div>
